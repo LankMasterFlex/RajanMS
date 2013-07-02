@@ -8,35 +8,43 @@ namespace RajanMS.Servers
 {
     class WorldServer
     {
-        private List<ChannelServer> m_channels;
+        public byte Id { get; private set; }
+        public ChannelServer[] Channels { get; private set; }
 
-        public WorldServer(short port,int channels)
+        public WorldServer(byte id,short port,int channels)
         {
-            m_channels = new List<ChannelServer>();
+            Id = id;
+            Channels = new ChannelServer[channels];
 
             for (int i = 0; i < channels; i++)
             {
-                ChannelServer cs = new ChannelServer(port);
-                m_channels.Add(cs);
+                Channels[i] = new ChannelServer(id, port);
                 port++;
             }
         }
 
         public void Run()
         {
-            for (int i = 0; i < m_channels.Count; i++)
-            {
-                m_channels[i].Run();
-            }
+            foreach (ChannelServer cs in Channels)
+                cs.Run();
         }
 
         public void Shutdown()
         {
-            foreach (ChannelServer cs in m_channels)
+            foreach (ChannelServer cs in Channels)
                 cs.Shutdown();
-
-            m_channels.Clear();
         }
 
+        public int[] GetChannelLoads()
+        {
+            int[] final = new int[Channels.Length];
+
+            for (int i = 0; i < final.Length; i++)
+            {
+                final[i] = Channels[i].Load;
+            }
+
+            return final;
+        }
     }
 }

@@ -15,6 +15,15 @@ namespace RajanMS
         private PacketProcessor m_processor;
         private Func<MapleClient,bool> m_deathAction; //dont want to pass whole parent server obj
 
+        public byte World { get; set; }
+        public byte Channel { get; set; }
+
+        public int AccountId { get; set; }
+        public byte Gender { get; set; }
+        public string AccountName { get; set; }
+        public bool IsAdmin { get; set; }
+        public bool LoggedIn { get; set; }
+
         public MapleClient(Socket client, PacketProcessor processor, Func<MapleClient, bool> death)
             : base(client)
         {

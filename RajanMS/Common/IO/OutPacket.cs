@@ -7,7 +7,7 @@ namespace Common.IO
     {
         private BinaryWriter m_binaryWriter;
 
-        public OutPacket(short opcode, short size = 32)
+        public OutPacket(short opcode, short size = 64)
         {
             m_memoryStream = new MemoryStream(size); //Default Size
             m_binaryWriter = new BinaryWriter(m_memoryStream, Encoding.ASCII);
@@ -45,10 +45,12 @@ namespace Common.IO
                 m_binaryWriter.Write(value[i]);
             }
         }
-        public void WriteMapleString(string value)
+        public void WriteMapleString(string fmt,params object[] args)
         {
-            WriteShort((short)value.Length);
-            WriteString(value);
+            string final = string.Format(fmt, args);
+
+            WriteShort((short)final.Length);
+            WriteString(final);
         }
         public void WriteZero(int count)
         {

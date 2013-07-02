@@ -19,7 +19,6 @@ namespace RajanMS
 
         private delegate void LogDelegate(string fmt, params object[] args);
         private readonly LogDelegate m_logFunc;
-        private MasterServer m_master;
 
         public MainForm()
         {
@@ -38,7 +37,7 @@ namespace RajanMS
             int worlds = cr.ReadInt("Server", "Worlds");
             int channels = cr.ReadInt("Server", "Channels");
 
-            m_master = new MasterServer(worlds, (short)channels);
+            MasterServer.Instance = new MasterServer(worlds, (short)channels);
         }
 
         public void Log(string fmt, params object[] args)
@@ -64,7 +63,7 @@ namespace RajanMS
 
         private void btnToggle_Click(object sender, EventArgs e)
         {
-            m_master.Run();
+            MasterServer.Instance.Run();
             btnToggle.Enabled = false;
         }
 
@@ -79,7 +78,7 @@ namespace RajanMS
             else if (dr == System.Windows.Forms.DialogResult.Yes)
             {
 
-                m_master.Shutdown();
+                MasterServer.Instance.Shutdown();
             }
         }
 

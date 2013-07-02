@@ -26,12 +26,26 @@ namespace RajanMS.Servers
             SpawnHandlers();
         }
 
+        public int ClientLoad
+        {
+            get
+            {
+                return m_clients.Count;
+            }
+        }
+
         private void SpawnHandlers()
         {
             m_processor = new PacketProcessor("Login");
-            m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandlers.HandleLoginPassword);
-            m_processor.AppendHandler(RecvOps.Validate, LoginHandlers.HandleValidate);
+            m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
+            m_processor.AppendHandler(RecvOps.Validate, LoginHandler.HandleValidate);
+            m_processor.AppendHandler(RecvOps.ServerlistRequest, LoginHandler.HandleServerlistRequest);
+            m_processor.AppendHandler(RecvOps.ServerStatusRequest, LoginHandler.HandleServerStatusRequest);
+            m_processor.AppendHandler(RecvOps.RequestCharlist, LoginHandler.HandleCharlistRequest);
+
             m_processor.AppendHandler(RecvOps.StartHackshield, GeneralHandler.HandleNothing);//to get it to shut up
+            m_processor.AppendHandler(RecvOps.Pong, GeneralHandler.HandleNothing);
+            m_processor.AppendHandler(RecvOps.ClientException, GeneralHandler.HandleClientException);
         }
 
         private void OnClientAccepted(Socket client)

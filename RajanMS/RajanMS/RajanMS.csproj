@@ -45,7 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Packets\Handlers\GeneralHandler.cs" />
-    <Compile Include="Packets\Handlers\LoginHandlers.cs" />
+    <Compile Include="Packets\Handlers\LoginHandler.cs" />
     <Compile Include="Packets\OpCodes.cs" />
     <Compile Include="Packets\PacketCreator.cs" />
     <Compile Include="Packets\PacketProcessor.cs" />

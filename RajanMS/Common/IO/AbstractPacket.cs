@@ -26,6 +26,11 @@ namespace Common.IO
             }
         }
 
+        public void Skip(int count)
+        {
+            Position += count;
+        }
+
         public byte[] ToArray()
         {
             return m_memoryStream.ToArray();

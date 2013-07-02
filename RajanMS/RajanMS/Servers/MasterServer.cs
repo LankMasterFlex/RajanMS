@@ -3,49 +3,51 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
 
 namespace RajanMS.Servers
 {
     class MasterServer
     {
-        private LoginServer m_login;
-        private List<WorldServer> m_worlds;
+        public static MasterServer Instance { get; set; }
+
+        public LoginServer LoginServer { get; private set; }
+        public WorldServer[] Worlds { get; private set; }
+       
 
         public MasterServer(int worlds,short channels)
         {
             if (channels > 20)
                 throw new Exception("More than 20 channels");
 
+            if (worlds > Constants.WorldNames.Length)
+                throw new Exception("More than supported worlds");
 
-            m_login = new LoginServer(8484);
-            m_worlds = new List<WorldServer>();
+            LoginServer = new LoginServer(8484);
+            Worlds = new WorldServer[worlds];
 
             short port = 8485;
 
             for (int i = 0; i < worlds; i++)
             {
-                WorldServer ws = new WorldServer(port, channels);
+                Worlds[i] = new WorldServer((byte)i, port, channels);
                 port += channels;
-
-                m_worlds.Add(ws);
             }
         }
 
         public void Run()
         {
-            m_login.Run();
+            LoginServer.Run();
 
-            foreach (WorldServer ws in m_worlds)
+            foreach (WorldServer ws in Worlds)
                 ws.Run();
         }
         public void Shutdown()
         {
-            m_login.Shutdown();
+            LoginServer.Shutdown();
 
-            foreach (WorldServer ws in m_worlds)
+            foreach (WorldServer ws in Worlds)
                 ws.Shutdown();
-
-            m_worlds.Clear();
         }
     }
 }
