@@ -6,14 +6,22 @@ namespace Common.Network
 {
     public sealed class Acceptor
     {
+        public short Port { get; private set; }
+
         private readonly TcpListener m_listener;
 
         private bool m_disposed;
 
         public Action<Socket> OnClientAccepted;
 
+        public Acceptor(short port)
+            : this(IPAddress.Any, port)
+        {
+        }
+
         public Acceptor(IPAddress ip, short port)
         {
+            Port = port;
             m_listener = new TcpListener(IPAddress.Any, port);
             OnClientAccepted = null;
             m_disposed = false;
@@ -27,7 +35,7 @@ namespace Common.Network
 
         public void Stop()
         {
-            m_listener.Stop();
+            Dispose();
         }
 
         private void EndAccept(IAsyncResult iar)
@@ -36,10 +44,12 @@ namespace Common.Network
 
             Socket client = m_listener.EndAcceptSocket(iar);
 
-            if (OnClientAccepted != null)
-                OnClientAccepted(client);
+                if (OnClientAccepted != null)
+                    OnClientAccepted(client);
 
-            m_listener.BeginAcceptSocket(EndAccept, null);
+
+                    m_listener.BeginAcceptSocket(EndAccept, null);
+                
         }
 
         public void Dispose()

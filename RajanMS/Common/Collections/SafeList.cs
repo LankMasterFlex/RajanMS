@@ -14,6 +14,17 @@ namespace Common.Collections
             m_locker = new object();
         }
 
+        public int Count
+        {
+            get
+            {
+                lock (m_locker)
+                {
+                    return m_list.Count;
+                }
+            }
+        }
+
         public void Add(T value)
         {
             lock (m_locker)
@@ -53,10 +64,15 @@ namespace Common.Collections
         {
             lock (m_locker)
             {
-                foreach (T value in m_list)
-                {
-                    action(value);
-                }
+                m_list.ForEach(action);
+            }
+        }
+
+        public T[] ToArray()
+        {
+            lock (m_locker)
+            {
+                return m_list.ToArray();
             }
         }
 

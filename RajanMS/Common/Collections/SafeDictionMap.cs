@@ -57,7 +57,7 @@ namespace Common.Collections
                 {
                     action(pair);
                 }
-            }
+            } 
         }
 
         public void Dispose()
