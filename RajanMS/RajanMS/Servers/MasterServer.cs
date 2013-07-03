@@ -7,16 +7,18 @@ using Common;
 
 namespace RajanMS.Servers
 {
-    class MasterServer
+    sealed class MasterServer
     {
         public static MasterServer Instance { get; set; }
 
         public LoginServer LoginServer { get; private set; }
         public WorldServer[] Worlds { get; private set; }
-       
+        public Database Database { get; private set; }
 
         public MasterServer(int worlds,short channels)
         {
+            Database = new Database("mongodb://localhost","RajanMS");
+
             if (channels > 20)
                 throw new Exception("More than 20 channels");
 

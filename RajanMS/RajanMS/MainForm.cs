@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common;
+using RajanMS.Game;
 using RajanMS.Servers;
 
 namespace RajanMS
@@ -26,6 +27,8 @@ namespace RajanMS
          
             InitializeComponent();
             m_logFunc = new LogDelegate(Log);
+
+            Text += string.Concat(" v",Constants.MajorVersion, '.', Constants.MinorVersion);
 
             LoadConfig();
         }
@@ -63,8 +66,38 @@ namespace RajanMS
 
         private void btnToggle_Click(object sender, EventArgs e)
         {
-            MasterServer.Instance.Run();
             btnToggle.Enabled = false;
+            MasterServer.Instance.Run();
+            
+            /*
+            Account rajan = new Account()
+            {
+                AccountId = 0,
+                Username = "rajan",
+                Password = "12345",
+                PIC = string.Empty,
+                LastIP = string.Empty,
+                LoggedIn = false,
+                GM = false,
+                Banned = false,
+                BanReason = string.Empty,
+            };
+
+            Account arun = new Account()
+            {
+                AccountId = 0,
+                Username = "arun",
+                Password = "12345",
+                PIC = string.Empty,
+                LastIP = string.Empty,
+                LoggedIn = false,
+                GM = true,
+                Banned = false,
+                BanReason = string.Empty,
+            };
+            MasterServer.Instance.Database.SaveAccount(rajan);
+            MasterServer.Instance.Database.SaveAccount(arun);
+             */
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -81,6 +114,5 @@ namespace RajanMS
                 MasterServer.Instance.Shutdown();
             }
         }
-
     }
 }

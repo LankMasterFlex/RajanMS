@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RajanMS.Servers
 {
-    class WorldServer
+    sealed class WorldServer
     {
         public byte Id { get; private set; }
         public ChannelServer[] Channels { get; private set; }
@@ -18,7 +18,7 @@ namespace RajanMS.Servers
 
             for (int i = 0; i < channels; i++)
             {
-                Channels[i] = new ChannelServer(id, port);
+                Channels[i] = new ChannelServer((byte)i,id, port);
                 port++;
             }
         }
@@ -33,6 +33,19 @@ namespace RajanMS.Servers
         {
             foreach (ChannelServer cs in Channels)
                 cs.Shutdown();
+        }
+
+        public int CurrentLoad
+        {
+            get
+            {
+                int final = 0;
+
+                foreach (ChannelServer cs in Channels)
+                    final += cs.Load;
+
+                return final;
+            }
         }
 
         public int[] GetChannelLoads()

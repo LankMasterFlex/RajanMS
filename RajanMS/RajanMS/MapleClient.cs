@@ -6,7 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Common.IO;
 using Common.Network;
+using RajanMS.Game;
 using RajanMS.Packets;
+using RajanMS.Servers;
 
 namespace RajanMS
 {
@@ -15,17 +17,13 @@ namespace RajanMS
         private PacketProcessor m_processor;
         private Func<MapleClient,bool> m_deathAction; //dont want to pass whole parent server obj
 
+        public List<Character> Characters { get; set; }
+        public Account Account { get; set; }
+
         public byte World { get; set; }
         public byte Channel { get; set; }
 
-        public int AccountId { get; set; }
-        public byte Gender { get; set; }
-        public string AccountName { get; set; }
-        public bool IsAdmin { get; set; }
-        public bool LoggedIn { get; set; }
-
-        public MapleClient(Socket client, PacketProcessor processor, Func<MapleClient, bool> death)
-            : base(client)
+        public MapleClient(Socket client, PacketProcessor processor, Func<MapleClient, bool> death) : base(client)
         {
             m_processor = processor;
             m_deathAction = death;
@@ -52,6 +50,15 @@ namespace RajanMS
 
         protected override void OnDisconnected()
         {
+            if (Account != null)
+            {
+                Account.LoggedIn = false;
+                MasterServer.Instance.Database.SaveAccount(Account);
+            }
+
+            if (Characters != null)
+                Characters.Clear();
+
             MainForm.Instance.Log("[{0}] Client {1} disconnected", m_processor.Label, Label);
             m_deathAction(this); //remove from list!
         }

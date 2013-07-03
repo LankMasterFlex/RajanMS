@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Drawing;
+using System.IO;
 using System.Text;
 
 namespace Common.IO
@@ -45,6 +46,20 @@ namespace Common.IO
                 m_binaryWriter.Write(value[i]);
             }
         }
+        public void WritePaddedString(string value,int length)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if (i < value.Length)
+                {
+                    m_binaryWriter.Write(value[i]);
+                }
+                else
+                {
+                    WriteByte();
+                }
+            }
+        }
         public void WriteMapleString(string fmt,params object[] args)
         {
             string final = string.Format(fmt, args);
@@ -56,6 +71,11 @@ namespace Common.IO
         {
             for (int i = 0; i < count; i++)
                 WriteByte();
+        }
+        public void WritePosition(Point value)
+        {
+            WriteShort((short)value.X);
+            WriteShort((short)value.Y);
         }
 
         protected override void CustomDispose()

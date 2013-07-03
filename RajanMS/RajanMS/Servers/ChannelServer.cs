@@ -9,14 +9,17 @@ using Common.Network;
 
 namespace RajanMS.Servers
 {
-    class ChannelServer
+    sealed class ChannelServer
     {
+        public byte Id { get; private set; }
         public byte WorldId { get; private set; }
+        
         private Acceptor m_acceptor;
         private List<MapleClient> m_clients;
 
-        public ChannelServer(byte worldId,short port)
+        public ChannelServer(byte id,byte worldId,short port)
         {
+            Id = id;
             WorldId = worldId;
 
             m_acceptor = new Acceptor(port);
@@ -29,7 +32,7 @@ namespace RajanMS.Servers
         {
             get
             {
-                return (m_clients.Count + 1)* 800;
+                return m_clients.Count;
             }
         }
 

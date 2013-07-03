@@ -39,12 +39,19 @@ namespace RajanMS.Servers
             m_processor = new PacketProcessor("Login");
             m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
             m_processor.AppendHandler(RecvOps.Validate, LoginHandler.HandleValidate);
-            m_processor.AppendHandler(RecvOps.ServerlistRequest, LoginHandler.HandleServerlistRequest);
-            m_processor.AppendHandler(RecvOps.ServerStatusRequest, LoginHandler.HandleServerStatusRequest);
-            m_processor.AppendHandler(RecvOps.RequestCharlist, LoginHandler.HandleCharlistRequest);
+            m_processor.AppendHandler(RecvOps.WorldInfoRequest, LoginHandler.HandleWorldInfoRequest);
+            m_processor.AppendHandler(RecvOps.WorldInfoRequest2, LoginHandler.HandleWorldInfoRequest);
+            m_processor.AppendHandler(RecvOps.CheckUserLimit, LoginHandler.HandleCheckUserLimit);
+            m_processor.AppendHandler(RecvOps.WorldSelect, LoginHandler.HandleWorldSelect);
+            m_processor.AppendHandler(RecvOps.CheckDuplicateName, LoginHandler.HandleCheckDuplicateName);
+            m_processor.AppendHandler(RecvOps.CreateCharacter, LoginHandler.HandleCreateCharacter);
+            m_processor.AppendHandler(RecvOps.DeleteCharacter, LoginHandler.HandleDeleteCharacter);
+            m_processor.AppendHandler(RecvOps.SelectCharacter, LoginHandler.HandleSelectCharacter);
+            m_processor.AppendHandler(RecvOps.SelectCharacterSetPIC, LoginHandler.HandleSelectCharacterSetPIC);
 
-            m_processor.AppendHandler(RecvOps.StartHackshield, GeneralHandler.HandleNothing);//to get it to shut up
+            m_processor.AppendHandler(RecvOps.StartHackshield, GeneralHandler.HandleNothing);
             m_processor.AppendHandler(RecvOps.Pong, GeneralHandler.HandleNothing);
+            m_processor.AppendHandler(RecvOps.Unk1, GeneralHandler.HandleNothing);
             m_processor.AppendHandler(RecvOps.ClientException, GeneralHandler.HandleClientException);
         }
 

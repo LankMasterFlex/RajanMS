@@ -12,6 +12,7 @@ namespace RajanMS.Packets.Handlers
         public static void HandleNothing(MapleClient c, InPacket p)
         {
         }
+
         public static void HandleClientException(MapleClient c, InPacket p)
         {
             string error = p.ReadMapleString();

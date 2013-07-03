@@ -32,6 +32,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\..\..\..\..\Downloads\CSharpDriver-1.8.1\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>..\..\..\..\..\Downloads\CSharpDriver-1.8.1\MongoDB.Driver.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database.cs" />
+    <Compile Include="Game\Account.cs" />
+    <Compile Include="Game\Character.cs" />
     <Compile Include="Packets\Handlers\GeneralHandler.cs" />
     <Compile Include="Packets\Handlers\LoginHandler.cs" />
     <Compile Include="Packets\OpCodes.cs" />

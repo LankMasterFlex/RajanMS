@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Common;
 using Common.IO;
+using RajanMS.Game;
 
 namespace RajanMS.Packets
 {
@@ -26,23 +28,23 @@ namespace RajanMS.Packets
 
         public static byte[] Ping()
         {
-            using (OutPacket p = new OutPacket(SendOps.Ping,2))
+            using (OutPacket p = new OutPacket(SendOps.Ping, 2))
             {
                 return p.ToArray();
             }
         }
 
-        public static byte[] LoginSuccess(MapleClient c)
+        public static byte[] LoginSuccess(Account acc)
         {
             using (OutPacket p = new OutPacket(SendOps.LoginResponse))
             {
                 p.WriteZero(6); //byte byte int
-                p.WriteInt(c.AccountId);
-                p.WriteByte(c.Gender);
-                p.WriteBool(c.IsAdmin);
+                p.WriteInt(acc.AccountId);
+                p.WriteByte(acc.Gender);
+                p.WriteBool(acc.GM);
                 p.WriteShort();
                 p.WriteBool(false); //admin commands
-                p.WriteMapleString(c.AccountName);
+                p.WriteMapleString(acc.Username);
                 p.WriteByte(3);
                 p.WriteByte(); //quiete ban
                 p.WriteLong(); //quiete ban time
@@ -50,7 +52,16 @@ namespace RajanMS.Packets
                 p.WriteLong(); //create time
                 p.WriteInt(4);
                 p.WriteBool(true); //disable pin
-                p.WriteByte(2); //pic 0 = set 1= use 2 = none
+
+                if (string.IsNullOrEmpty(acc.PIC)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
+                {
+                    p.WriteByte();
+                }
+                else
+                {
+                    p.WriteByte(1);
+                }
+
                 p.WriteLong(); //session?
                 return p.ToArray();
             }
@@ -84,9 +95,9 @@ namespace RajanMS.Packets
             }
         }
 
-        public static byte[] Serverlist(byte serverId,string serverName,int[] loads)
+        public static byte[] Worldlist(byte serverId, string serverName, int[] loads)
         {
-            using (OutPacket p = new OutPacket(SendOps.Serverlist))
+            using (OutPacket p = new OutPacket(SendOps.Worldlist))
             {
                 p.WriteByte(serverId);
                 p.WriteMapleString(serverName);
@@ -102,19 +113,34 @@ namespace RajanMS.Packets
                 foreach (int chLoad in loads)
                 {
                     p.WriteMapleString("{0}-{1}", serverName, id++);
-                    p.WriteInt(chLoad);
+                    p.WriteInt(chLoad * 200);
                     p.WriteByte(serverId);
                     p.WriteShort((short)(id - 1));
                 }
+
+                /*
+                var chatBubbles = new Dictionary<Point, string>();
+
+                chatBubbles.Add(new Point(0, 265), "What the fuck is this shit?!");
+                chatBubbles.Add(new Point(500, 370), "Stolen from Rice?!");
+                
+                p.WriteShort((short)chatBubbles.Count);
+
+                foreach (KeyValuePair<Point, string> kvp in chatBubbles)
+                {
+                    p.WritePosition(kvp.Key);
+                    p.WriteMapleString(kvp.Value);
+                }
+                */
 
                 p.WriteZero(6);
                 return p.ToArray();
             }
         }
 
-        public static byte[] EndOfServerlist()
+        public static byte[] EndOfWorldlist()
         {
-            using (OutPacket p = new OutPacket(SendOps.Serverlist,3))
+            using (OutPacket p = new OutPacket(SendOps.Worldlist, 3))
             {
                 p.WriteShort(0xFF); //113+ controversy? nothing wrong with some padding :)
                 return p.ToArray();
@@ -127,11 +153,225 @@ namespace RajanMS.Packets
         ///2 - Full
         /// </summary>
         /// <returns></returns>
-        public static byte[] ServerStatus(byte status)
+        public static byte[] UserLimit(byte status)
         {
             using (OutPacket p = new OutPacket(SendOps.ServerStatus, 4))
             {
                 p.WriteShort(status);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] CharacterList(MapleClient c)
+        {
+            using (OutPacket p = new OutPacket(SendOps.Charlist))
+            {
+                p.WriteByte(); //idk
+
+                IEnumerable<Character> chars = c.Characters.Where((chr) => chr.WorldId == c.World); //characters in same world
+
+                p.WriteByte((byte)chars.Count());
+
+                foreach (Character chr in chars)
+                {
+                    AddCharEntry(p, chr, chr.Level >= 30, false);
+                }
+
+                if (string.IsNullOrEmpty(c.Account.PIC)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
+                {
+                    p.WriteByte(); //set
+                }
+                else
+                {
+                    p.WriteByte(1); //use
+                }
+
+                p.WriteByte();
+                p.WriteInt(3); //char slots
+                p.WriteInt();
+                return p.ToArray();
+            }
+        }
+
+        public static void AddCharStats(OutPacket p, Character c)
+        {
+            p.WriteInt(c.CharId);
+            p.WritePaddedString(c.Name, 13);
+            p.WriteByte(c.Gender);
+            p.WriteByte(c.SkinColor);
+            p.WriteInt(c.FaceId);
+            p.WriteInt(c.HairId);
+            p.WriteZero(24);// pet unique id's
+            p.WriteByte(c.Level);
+            p.WriteShort(c.Job);
+            p.WriteShort(c.Str);
+            p.WriteShort(c.Dex);
+            p.WriteShort(c.Int);
+            p.WriteShort(c.Luk);
+            p.WriteInt(c.HP);
+            p.WriteInt(c.MaxHP);
+            p.WriteInt(c.MP);
+            p.WriteInt(c.MaxMP);
+            p.WriteShort(c.AP);
+
+            if (Constants.isSeparatedSp(c.Job))
+            {
+                byte length = 0;
+
+                for (int i = 0; i < c.SP.Length; i++)
+                {
+                    if (c.SP[i] > 0)
+                    {
+                        length++;
+                    }
+                }
+
+                p.WriteByte(length);
+
+                for (int i = 0; i < c.SP.Length; i++)
+                {
+                    if (c.SP[i] > 0)
+                    {
+                        p.WriteByte((byte)(i + 1));
+                        p.WriteByte(c.SP[i]);
+                    }
+                }
+            }
+            else
+            {
+                p.WriteShort(c.SP[0]);
+            }
+
+            p.WriteInt(c.EXP);
+            p.WriteInt(c.Fame);
+            p.WriteInt(); // gacha exp
+            p.WriteInt(c.MapId);
+            p.WriteByte(c.SpawnPoint);
+            p.WriteInt(0);// online time in seconds
+
+
+            if (Constants.isDualBlade(c.Job))
+                p.WriteShort(1);
+            else if (Constants.isCannon(c.Job))
+                p.WriteShort(2);
+            else
+                p.WriteShort();
+
+            if (Constants.isDemon(c.Job))
+                p.WriteInt(c.DemonSlayerAccessory);
+
+            p.WriteByte(c.Fatigue);
+
+            p.WriteInt(0);
+
+            p.WriteInt(c.Ambition);
+            p.WriteInt(c.Insight);
+            p.WriteInt(c.Willpower);
+            p.WriteInt(c.Diligence);
+            p.WriteInt(c.Empathy);
+            p.WriteInt(c.Charm);
+            p.WriteShort(c.AmbitionGained);
+            p.WriteShort(c.InsightGained);
+            p.WriteShort(c.WillpowerGained);
+            p.WriteShort(c.DiligenceGained);
+            p.WriteShort(c.EmpathyGained);
+            p.WriteShort(c.CharmGained);
+
+            p.WriteInt(c.BattleEXP);
+            p.WriteByte(c.BattleRank);
+            p.WriteInt(c.BattlePoints);
+            p.WriteByte(5);
+            p.WriteInt(0);
+
+            p.WriteInt((int)(DateTime.Now.ToFileTime() >> 32)); // FileTime.dwHighDateTime
+            p.WriteInt((int)(DateTime.Now.ToFileTime() << 32 >> 32)); // FileTime.dwLowDateTime
+            //p.WriteBytes(new byte[] { 0xD5, 0x64, 0xFB, 0x95, 0x37, 0x01, 0x00, 0x00 });
+            //p.WriteLong();
+            //p.WriteInt(0x95FB64D5); // dwHighDateTime // D5 64 FB 95
+            //p.WriteInt(0x137); // dwLowDateTime
+        }
+
+        public static void AddCharLook(OutPacket p, Character c, bool megaphone)
+        {
+            p.WriteByte(c.Gender);
+            p.WriteByte(c.SkinColor);
+            p.WriteInt(c.FaceId);
+            p.WriteInt(c.Job);
+            p.WriteByte(megaphone ? (byte)0 : (byte)1);
+            p.WriteInt(c.HairId);
+
+            //TO WRITE INVENTORY UGH
+            p.WriteByte(255);
+            p.WriteByte(255);
+
+            p.WriteInt(); //cash weapon
+            p.WriteBool(Constants.isMercedes(c.Job));
+            p.WriteZero(12); //pet
+            if (Constants.isDemon(c.Job)) // demon slayer
+                p.WriteInt(c.DemonSlayerAccessory);
+        }
+
+        public static void AddCharEntry(OutPacket p, Character c, bool rank, bool viewAll)
+        {
+            AddCharStats(p, c);
+            AddCharLook(p, c, true);
+
+            if (!viewAll)
+            {
+                p.WriteByte();
+            }
+
+            p.WriteBool(rank);
+
+            if (rank)
+            {
+                p.WriteInt(1); //rank
+                p.WriteInt(1); //rank move
+                p.WriteInt(1); //job rank
+                p.WriteInt(1); //job rank move
+            }
+        }
+
+        public static byte[] NameAvailable(string name, bool isTaken)
+        {
+            using (OutPacket p = new OutPacket(SendOps.NameAvailable))
+            {
+                p.WriteMapleString(name);
+                p.WriteBool(isTaken);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] NewCharacter(Character chr)
+        {
+            using (OutPacket p = new OutPacket(SendOps.CreateCharacter))
+            {
+                p.WriteByte();
+                AddCharEntry(p, chr, false, false);
+                return p.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 0 = okay
+        /// 0x12 = invalid birthday
+        /// 0x14 = invalid pic
+        /// </summary>
+        public static byte[] DeleteCharacter(int cid, byte mode)
+        {
+            using (OutPacket p = new OutPacket(SendOps.DeleteCharacter, 8))
+            {
+                p.WriteInt(cid);
+                p.WriteByte(mode);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] BadPic()
+        {
+            using (OutPacket p = new OutPacket(SendOps.CheckPIC,3))
+            {
+                p.WriteByte(0);
                 return p.ToArray();
             }
         }
