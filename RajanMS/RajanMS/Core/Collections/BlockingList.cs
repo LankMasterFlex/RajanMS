@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace RajanMS.Core.Collections
@@ -7,11 +8,13 @@ namespace RajanMS.Core.Collections
     {
         private List<T> m_list;
         private object m_locker;
+        private ConcurrentQueue<T> m_hitlist;
      
         public BlockingList()
         {
             m_list = new List<T>();
             m_locker = new object();
+            m_hitlist = new ConcurrentQueue<T>();
         }
 
         public void Add(T item, bool block = true)
@@ -37,6 +40,23 @@ namespace RajanMS.Core.Collections
             else
             {
                 m_list.Remove(item);
+            }
+        }
+
+        public void EnqueRemove(T item)
+        {
+            m_hitlist.Enqueue(item);
+        }
+
+        public void DispatchRemoval()
+        {
+            lock (m_locker)
+            {
+                T result;
+                while (m_hitlist.TryDequeue(out result))
+                {
+                    m_list.Remove(result);
+                }
             }
         }
 

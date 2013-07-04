@@ -67,7 +67,7 @@ namespace RajanMS.Servers
                 {
                     if ((DateTime.Now - mr.Expiry).Minutes > 1)
                     {
-                        m_migrateReqs.Remove(itr, false);
+                        m_migrateReqs.EnqueRemove(itr);
                         return;
                     }
 
@@ -77,12 +77,14 @@ namespace RajanMS.Servers
                     if (itr.CharacterId == mr.CharacterId &&
                         itr.SessionId == mr.SessionId)
                     {
-                        m_migrateReqs.Remove(itr,false);
+                        m_migrateReqs.EnqueRemove(itr);
                         found = true;
                         return;
                     }
 
                 });
+
+            m_migrateReqs.DispatchRemoval();
 
             return found;
         }
