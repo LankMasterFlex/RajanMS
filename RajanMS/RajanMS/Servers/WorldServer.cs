@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RajanMS.Game;
+using RajanMS.Core.Collections;
 
 namespace RajanMS.Servers
 {
@@ -10,6 +13,8 @@ namespace RajanMS.Servers
     {
         public byte Id { get; private set; }
         public ChannelServer[] Channels { get; private set; }
+
+        private BlockingList<MigrateRequest> m_migrateReqs;
 
         public WorldServer(byte id,short port,int channels)
         {
@@ -21,6 +26,8 @@ namespace RajanMS.Servers
                 Channels[i] = new ChannelServer((byte)i,id, port);
                 port++;
             }
+
+            m_migrateReqs = new BlockingList<MigrateRequest>();
         }
 
         public void Run()
@@ -28,7 +35,6 @@ namespace RajanMS.Servers
             foreach (ChannelServer cs in Channels)
                 cs.Run();
         }
-
         public void Shutdown()
         {
             foreach (ChannelServer cs in Channels)
@@ -46,6 +52,39 @@ namespace RajanMS.Servers
 
                 return final;
             }
+        }
+
+        public void AddMigrationRequest(MigrateRequest mr)
+        {
+            m_migrateReqs.Add(mr);
+        }
+
+        public bool EligableMigration(MigrateRequest mr)
+        {
+            bool found = false;
+
+            m_migrateReqs.ForEach((itr) =>
+                {
+                    if ((DateTime.Now - mr.Expiry).Minutes > 1)
+                    {
+                        m_migrateReqs.Remove(itr, false);
+                        return;
+                    }
+
+                    if (found) //still iterate times but if found no need to check legitimacy
+                        return;
+
+                    if (itr.CharacterId == mr.CharacterId &&
+                        itr.SessionId == mr.SessionId)
+                    {
+                        m_migrateReqs.Remove(itr,false);
+                        found = true;
+                        return;
+                    }
+
+                });
+
+            return found;
         }
 
         public int[] GetChannelLoads()

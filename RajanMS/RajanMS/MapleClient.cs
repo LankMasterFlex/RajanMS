@@ -4,8 +4,8 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Common.IO;
-using Common.Network;
+using RajanMS.IO;
+using RajanMS.Network;
 using RajanMS.Game;
 using RajanMS.Packets;
 using RajanMS.Servers;
@@ -17,8 +17,11 @@ namespace RajanMS
         private PacketProcessor m_processor;
         private Func<MapleClient,bool> m_deathAction; //dont want to pass whole parent server obj
 
+        public Character Character { get; set; }
         public List<Character> Characters { get; set; }
         public Account Account { get; set; }
+
+        public long SessionId { get; set; }
 
         public byte World { get; set; }
         public byte Channel { get; set; }
@@ -43,7 +46,7 @@ namespace RajanMS
                 }
                 else
                 {
-                    MainForm.Instance.Log("[{0}] Unhandled packet from {1}{2}{3}", m_processor.Label, Label, Environment.NewLine, p.ToString());
+                    MainForm.Instance.Log("[{0}] Unhandled packet from {1}: {2}", m_processor.Label, Label, p.ToString());
                 }
             }
         }
@@ -59,6 +62,9 @@ namespace RajanMS
             if (Characters != null)
                 Characters.Clear();
 
+            if (Character != null)
+                MasterServer.Instance.Database.SaveCharacter(Character);
+            
             MainForm.Instance.Log("[{0}] Client {1} disconnected", m_processor.Label, Label);
             m_deathAction(this); //remove from list!
         }

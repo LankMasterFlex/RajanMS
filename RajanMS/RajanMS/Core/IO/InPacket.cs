@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace Common.IO
+namespace RajanMS.IO
 {
     public sealed class InPacket : AbstractPacket
     {

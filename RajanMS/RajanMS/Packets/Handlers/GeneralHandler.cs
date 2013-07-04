@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Common.IO;
+﻿using RajanMS.IO;
 
 namespace RajanMS.Packets.Handlers
 {
@@ -16,7 +11,7 @@ namespace RajanMS.Packets.Handlers
         public static void HandleClientException(MapleClient c, InPacket p)
         {
             string error = p.ReadMapleString();
-            //MainForm.Instance.Log("[{0}] Exception : {1}", c.Label, error);
+            MainForm.Instance.Log("[{0}] Exception : {1}", c.Label, error);
         }
     }
 }

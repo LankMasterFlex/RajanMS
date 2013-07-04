@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using Common.Network;
+using RajanMS.Network;
 using RajanMS.Packets;
 using RajanMS.Packets.Handlers;
 
@@ -26,19 +22,12 @@ namespace RajanMS.Servers
             SpawnHandlers();
         }
 
-        public int ClientLoad
-        {
-            get
-            {
-                return m_clients.Count;
-            }
-        }
-
         private void SpawnHandlers()
         {
             m_processor = new PacketProcessor("Login");
-            m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
+        
             m_processor.AppendHandler(RecvOps.Validate, LoginHandler.HandleValidate);
+            m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
             m_processor.AppendHandler(RecvOps.WorldInfoRequest, LoginHandler.HandleWorldInfoRequest);
             m_processor.AppendHandler(RecvOps.WorldInfoRequest2, LoginHandler.HandleWorldInfoRequest);
             m_processor.AppendHandler(RecvOps.CheckUserLimit, LoginHandler.HandleCheckUserLimit);
@@ -47,7 +36,10 @@ namespace RajanMS.Servers
             m_processor.AppendHandler(RecvOps.CreateCharacter, LoginHandler.HandleCreateCharacter);
             m_processor.AppendHandler(RecvOps.DeleteCharacter, LoginHandler.HandleDeleteCharacter);
             m_processor.AppendHandler(RecvOps.SelectCharacter, LoginHandler.HandleSelectCharacter);
+            m_processor.AppendHandler(RecvOps.ViewAllSelectCharacter, LoginHandler.HandleSelectCharacter);
             m_processor.AppendHandler(RecvOps.SelectCharacterSetPIC, LoginHandler.HandleSelectCharacterSetPIC);
+            m_processor.AppendHandler(RecvOps.ViewAllCharacters, LoginHandler.HandleViewAllCharacters);
+            m_processor.AppendHandler(RecvOps.ViewWorldInfo, LoginHandler.HandleViewWorldInfo);
 
             m_processor.AppendHandler(RecvOps.StartHackshield, GeneralHandler.HandleNothing);
             m_processor.AppendHandler(RecvOps.Pong, GeneralHandler.HandleNothing);
@@ -57,7 +49,10 @@ namespace RajanMS.Servers
 
         private void OnClientAccepted(Socket client)
         {
-            MapleClient mc = new MapleClient(client, m_processor, m_clients.Remove);
+            MapleClient mc = new MapleClient(client, m_processor, m_clients.Remove)
+            {
+                SessionId = Tools.Randomizer.Generate(),
+            };
             m_clients.Add(mc);
 
             mc.WriteRawPacket(PacketCreator.Handshake());

@@ -1,4 +1,4 @@
-﻿namespace Common.Cryptography
+﻿namespace RajanMS.Cryptography
 {
     internal static class CustomEncryption
     {

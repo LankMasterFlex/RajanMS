@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Common
+namespace RajanMS
 {
     public static class Constants
     {
@@ -26,7 +26,7 @@ namespace Common
             "Mardia", "Kradia", "Yellonde",
             "Demethos", "Galicia", "El Nido",
             "Zenith", "Arcania", "Chaos",
-            "Nova", "Renegades"
+            "Nova", "Kalluna"
         };
 
         public static readonly int MaxPlayers = 100;
@@ -41,16 +41,6 @@ namespace Common
             return job == 2002 || (job / 100 == 23);
         }
 
-        public static bool isJett(short job)
-        {
-            return job == 508 || (job / 10 == 57);
-        }
-
-        public static bool isPhantom(short job)
-        {
-            return job == 2003 || (job / 100 == 24);
-        }
-
         public static bool isDemon(short job)
         {
             return job == 3001 || (job >= 3100 && job <= 3112);
@@ -61,19 +51,9 @@ namespace Common
             return job >= 2000 && job <= 2112 && job != 2001 && job != 2002 && job != 2003;
         }
 
-        public static bool isMihile(short job)
-        {
-            return job == 5000 || (job >= 5100 && job <= 5112);
-        }
-
         public static bool isResist(short job)
         {
             return job / 1000 == 3;
-        }
-
-        public static bool isKaiser(short job)
-        {
-            return job == 6000 || (job >= 6100 && job <= 6112);
         }
 
         public static bool isWildHunter(short job)
@@ -93,7 +73,7 @@ namespace Common
 
         public static bool isSeparatedSp(short job)
         {
-            return (isEvan(job) || (isResist(job)) || (isMercedes(job)) || (isJett(job)) || (isPhantom(job) || (isMihile(job) || isKaiser(job))));
+            return isEvan(job) || isResist(job) || isMercedes(job);
         }
 
         public static bool is_extendsp_job(int jobId)
@@ -160,7 +140,7 @@ namespace Common
             CannonBlaster = 531,
             CannonMaster = 532,
 
-            Manager = 800,
+            Manager = 800, //?
 
             GM = 900,
             SuperGM = 910,
@@ -216,17 +196,6 @@ namespace Common
             Mercedes3 = 2311,
             Mercedes4 = 2312,
 
-            Phantom = 2003,
-            Phantom1 = 2400,
-            Phantom2 = 2410,
-            Phantom3 = 2411,
-            Phantom4 = 2412,
-
-            Luminosu1 = 2700,
-            Luminosu2 = 2710,
-            Luminosu3 = 2711,
-            Luminosu4 = 2712,
-
             Citizen = 3000,
 
             DemonSlayer = 3001,
@@ -249,18 +218,6 @@ namespace Common
             Mechanic2 = 3510,
             Mechanic3 = 3511,
             Mechanic4 = 3512,
-
-            Mihail = 5000,
-            Mihail1 = 5100,
-            Mihail2 = 5110,
-            Mihail3 = 5111,
-            Mihail4 = 5112,
-
-            Kaiser = 6000,
-            Kaiser1 = 6100,
-            Kaiser2 = 6110,
-            Kaiser3 = 6111,
-            Kaiser4 = 6112,
         }
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Common
+namespace RajanMS.Tools
 {
     public sealed class ConfigReader
     {
@@ -17,6 +17,14 @@ namespace Common
            StringBuilder lpReturnedString,
            uint nSize,
            string lpFileName);
+
+        public string this[string section,string key]
+        {
+            get
+            {
+                return ReadString(section, key);
+            }
+        }
 
         public ConfigReader(string file)
         {
@@ -36,11 +44,6 @@ namespace Common
             GetPrivateProfileString(section, key, string.Empty, temp, 255, Path);
             
             return temp.ToString();
-        }
-
-        public int ReadInt(string section, string key)
-        {
-            return Int32.Parse(ReadString(section, key));
         }
     }
 }

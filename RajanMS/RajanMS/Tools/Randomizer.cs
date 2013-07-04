@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Common
+namespace RajanMS.Tools
 {
     public static class Randomizer
     {

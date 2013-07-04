@@ -30,6 +30,7 @@
         {
             this.btnToggle = new System.Windows.Forms.Button();
             this.textBoxLog = new System.Windows.Forms.TextBox();
+            this.btnCreateAcc = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnToggle
@@ -38,7 +39,7 @@
             this.btnToggle.Name = "btnToggle";
             this.btnToggle.Size = new System.Drawing.Size(75, 23);
             this.btnToggle.TabIndex = 0;
-            this.btnToggle.Text = "Start Server";
+            this.btnToggle.Text = "Start";
             this.btnToggle.UseVisualStyleBackColor = true;
             this.btnToggle.Click += new System.EventHandler(this.btnToggle_Click);
             // 
@@ -55,11 +56,22 @@
             this.textBoxLog.Size = new System.Drawing.Size(360, 209);
             this.textBoxLog.TabIndex = 1;
             // 
+            // btnCreateAcc
+            // 
+            this.btnCreateAcc.Location = new System.Drawing.Point(281, 12);
+            this.btnCreateAcc.Name = "btnCreateAcc";
+            this.btnCreateAcc.Size = new System.Drawing.Size(91, 23);
+            this.btnCreateAcc.TabIndex = 2;
+            this.btnCreateAcc.Text = "Create Account";
+            this.btnCreateAcc.UseVisualStyleBackColor = true;
+            this.btnCreateAcc.Click += new System.EventHandler(this.btnCreateAcc_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(384, 262);
+            this.Controls.Add(this.btnCreateAcc);
             this.Controls.Add(this.textBoxLog);
             this.Controls.Add(this.btnToggle);
             this.MaximizeBox = false;
@@ -75,6 +87,7 @@
 
         private System.Windows.Forms.Button btnToggle;
         private System.Windows.Forms.TextBox textBoxLog;
+        private System.Windows.Forms.Button btnCreateAcc;
 
 
     }

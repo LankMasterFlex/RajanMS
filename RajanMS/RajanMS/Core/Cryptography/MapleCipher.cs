@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Common.Cryptography
+namespace RajanMS.Cryptography
 {
     public sealed class MapleCipher : IDisposable
     {

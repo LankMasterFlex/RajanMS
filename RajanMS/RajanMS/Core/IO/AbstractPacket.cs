@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Common.IO
+namespace RajanMS.IO
 {
     public abstract class AbstractPacket : IDisposable
     {

@@ -20,6 +20,7 @@ namespace RajanMS.Game
         public byte WorldId { get; set; }
 
         public int CharId { get; set; }
+
         public string Name { get; set; }
         public byte Gender { get; set; }
         public byte SkinColor { get; set; }

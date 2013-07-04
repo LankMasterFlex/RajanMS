@@ -4,8 +4,10 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
-using Common;
-using Common.Network;
+using RajanMS;
+using RajanMS.Network;
+using RajanMS.Packets;
+using RajanMS.Packets.Handlers;
 
 namespace RajanMS.Servers
 {
@@ -13,7 +15,9 @@ namespace RajanMS.Servers
     {
         public byte Id { get; private set; }
         public byte WorldId { get; private set; }
-        
+        public short Port { get; private set; }
+
+        private PacketProcessor m_processor;
         private Acceptor m_acceptor;
         private List<MapleClient> m_clients;
 
@@ -21,11 +25,26 @@ namespace RajanMS.Servers
         {
             Id = id;
             WorldId = worldId;
+            Port = port;
 
             m_acceptor = new Acceptor(port);
             m_acceptor.OnClientAccepted = OnClientAccepted;
 
             m_clients = new List<MapleClient>();
+
+            SpawnHandlers();
+        }
+
+        private void SpawnHandlers()
+        {
+            m_processor = new PacketProcessor("Channel");
+
+            m_processor.AppendHandler(RecvOps.Migrate, InterserverHandler.HandleMigrate);
+        }
+
+        public bool Contains(MapleClient c)
+        {
+            return m_clients.Contains(c);
         }
 
         public int Load
@@ -38,6 +57,16 @@ namespace RajanMS.Servers
 
         private void OnClientAccepted(Socket client)
         {
+            MapleClient mc = new MapleClient(client, m_processor, m_clients.Remove)
+            {
+                World = WorldId,
+                Channel = Id
+            };
+            
+            m_clients.Add(mc);
+
+            mc.WriteRawPacket(PacketCreator.Handshake());
+            MainForm.Instance.Log("[Channel] Accepted client {0}", mc.Label);
         }
 
         public void Run()

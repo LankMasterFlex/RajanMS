@@ -12,5 +12,16 @@ namespace RajanMS
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
         }
+
+        /* My config file
+         * 
+         * [Server]
+         * Worlds = 1
+         * Channels = 1
+         * 
+         * [Database]
+         * Host = mongodb://localhost
+         * Name = RajanMS
+         */
     }
 }

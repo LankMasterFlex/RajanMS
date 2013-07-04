@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Common;
+using RajanMS;
+using RajanMS.Tools;
 
 namespace RajanMS.Servers
 {
@@ -11,13 +12,22 @@ namespace RajanMS.Servers
     {
         public static MasterServer Instance { get; set; }
 
+        public bool Running { get; private set; }
+
         public LoginServer LoginServer { get; private set; }
         public WorldServer[] Worlds { get; private set; }
         public Database Database { get; private set; }
 
-        public MasterServer(int worlds,short channels)
+        public ConfigReader Config { get; private set; }
+
+        public MasterServer()
         {
-            Database = new Database("mongodb://localhost","RajanMS");
+            Config = new ConfigReader(Constants.ConfigName);
+
+            Database = new Database(Config["Database", "Host"], Config["Database", "Name"]);
+
+            int worlds = Config["Server", "Worlds"].ToInt32();
+            byte channels = (byte)Config["Server", "Channels"].ToInt32();
 
             if (channels > 20)
                 throw new Exception("More than 20 channels");
@@ -43,13 +53,25 @@ namespace RajanMS.Servers
 
             foreach (WorldServer ws in Worlds)
                 ws.Run();
+
+            Running = true;
+
+            MainForm.Instance.Log("RajanMS is online");
         }
         public void Shutdown()
         {
+            MainForm.Instance.Log("Shutting down MasterServer");
+
             LoginServer.Shutdown();
 
             foreach (WorldServer ws in Worlds)
                 ws.Shutdown();
+
+            Database.SetAllOffline();
+
+            Running = false;
+
+            MainForm.Instance.Log("RajanMS is offline");
         }
     }
 }

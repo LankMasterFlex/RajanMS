@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Common.IO;
+using RajanMS.IO;
 
 namespace RajanMS.Packets
 {
@@ -10,34 +10,34 @@ namespace RajanMS.Packets
     {
         public string Label { get; private set; }
 
-        private Dictionary<short, PacketHandler> m_handlers;
+        private PacketHandler[] m_handlers;
+        private int m_count;
 
         public int Count
         {
             get
             {
-                return m_handlers.Count;
+                return m_count;
             }
         }
 
         public PacketProcessor(string label)
         {
             Label = label;
-            m_handlers = new Dictionary<short, PacketHandler>();
+            m_handlers = new PacketHandler[0xFFFF + 1]; //YOLO
         }
 
         public void AppendHandler(short opcode, PacketHandler handler)
         {
-            m_handlers.Add(opcode, handler);
+            m_handlers[opcode] = handler;
+            m_count++;
         }
 
         public PacketHandler this[short opcode]
         {
             get
             {
-                PacketHandler handler;
-                m_handlers.TryGetValue(opcode, out handler);
-                return handler;
+                return m_handlers[opcode];
             }
         }
     }

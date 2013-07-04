@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Common.Collections
+namespace RajanMS.Collections
 {
     public sealed class SafeDictionMap<TKey, TValue> : IDisposable
     {

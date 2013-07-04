@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Common.Network
+namespace RajanMS.Network
 {
     public sealed class Acceptor
     {

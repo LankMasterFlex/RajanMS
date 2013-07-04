@@ -1,4 +1,3 @@
 RajanMS
 =======
-
-v111 ms pserver based off of lithium and lokims
+v111 MapleStory private server coded in C#.

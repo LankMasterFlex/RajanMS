@@ -2,13 +2,13 @@
 using System.IO;
 using System.Text;
 
-namespace Common.IO
+namespace RajanMS.IO
 {
     public sealed class OutPacket : AbstractPacket
     {
         private BinaryWriter m_binaryWriter;
 
-        public OutPacket(short opcode, short size = 64)
+        public OutPacket(short opcode, int size = 64)
         {
             m_memoryStream = new MemoryStream(size); //Default Size
             m_binaryWriter = new BinaryWriter(m_memoryStream, Encoding.ASCII);

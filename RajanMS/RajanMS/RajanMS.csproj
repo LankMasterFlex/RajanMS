@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -50,10 +51,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Database.cs" />
+    <Compile Include="Core\Collections\BlockingList.cs" />
+    <Compile Include="Core\Collections\SafeDictionMap.cs" />
+    <Compile Include="Core\Cryptography\AESEncryption.cs" />
+    <Compile Include="Core\Cryptography\CustomEncryption.cs" />
+    <Compile Include="Core\Cryptography\MapleCipher.cs" />
+    <Compile Include="Servers\MigrateRequest.cs" />
+    <Compile Include="GUI\RegisterForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GUI\RegisterForm.Designer.cs">
+      <DependentUpon>RegisterForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Tools\Database.cs" />
     <Compile Include="Game\Account.cs" />
     <Compile Include="Game\Character.cs" />
+    <Compile Include="Core\IO\AbstractPacket.cs" />
+    <Compile Include="Core\IO\InPacket.cs" />
+    <Compile Include="Core\IO\OutPacket.cs" />
+    <Compile Include="Core\Network\Acceptor.cs" />
+    <Compile Include="Core\Network\MapleSession.cs" />
     <Compile Include="Packets\Handlers\GeneralHandler.cs" />
+    <Compile Include="Packets\Handlers\InterserverHandler.cs" />
     <Compile Include="Packets\Handlers\LoginHandler.cs" />
     <Compile Include="Packets\OpCodes.cs" />
     <Compile Include="Packets\PacketCreator.cs" />
@@ -65,12 +84,19 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="MapleClient.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Tools\Extensions.cs" />
+    <Compile Include="Tools\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Servers\ChannelServer.cs" />
     <Compile Include="Servers\LoginServer.cs" />
     <Compile Include="Servers\MasterServer.cs" />
     <Compile Include="Servers\WorldServer.cs" />
+    <Compile Include="Tools\ConfigReader.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Tools\Randomizer.cs" />
+    <EmbeddedResource Include="GUI\RegisterForm.resx">
+      <DependentUpon>RegisterForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -95,12 +121,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{772f2718-07ba-4adc-922a-b5d3c7847b91}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -8,9 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Common;
 using RajanMS.Game;
 using RajanMS.Servers;
+using RajanMS.Tools;
 
 namespace RajanMS
 {
@@ -30,18 +30,9 @@ namespace RajanMS
 
             Text += string.Concat(" v",Constants.MajorVersion, '.', Constants.MinorVersion);
 
-            LoadConfig();
+            MasterServer.Instance = new MasterServer();
         }
 
-        public void LoadConfig()
-        {
-            ConfigReader cr = new ConfigReader(Constants.ConfigName);
-
-            int worlds = cr.ReadInt("Server", "Worlds");
-            int channels = cr.ReadInt("Server", "Channels");
-
-            MasterServer.Instance = new MasterServer(worlds, (short)channels);
-        }
 
         public void Log(string fmt, params object[] args)
         {
@@ -66,53 +57,36 @@ namespace RajanMS
 
         private void btnToggle_Click(object sender, EventArgs e)
         {
-            btnToggle.Enabled = false;
-            MasterServer.Instance.Run();
-            
-            /*
-            Account rajan = new Account()
+            if (btnToggle.Text == "Start")
             {
-                AccountId = 0,
-                Username = "rajan",
-                Password = "12345",
-                PIC = string.Empty,
-                LastIP = string.Empty,
-                LoggedIn = false,
-                GM = false,
-                Banned = false,
-                BanReason = string.Empty,
-            };
+                MasterServer.Instance.Run();
+                btnToggle.Text = "Shutdown";
+            }
+            else
+            {
+                DialogResult dr = MessageBox.Show("Are you sure you want to shutdown?", "Server Shutdown", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
 
-            Account arun = new Account()
-            {
-                AccountId = 0,
-                Username = "arun",
-                Password = "12345",
-                PIC = string.Empty,
-                LastIP = string.Empty,
-                LoggedIn = false,
-                GM = true,
-                Banned = false,
-                BanReason = string.Empty,
-            };
-            MasterServer.Instance.Database.SaveAccount(rajan);
-            MasterServer.Instance.Database.SaveAccount(arun);
-             */
+                if (dr == DialogResult.Yes)
+                {
+                    MasterServer.Instance.Shutdown();
+                    btnToggle.Text = "Start";
+                }
+            }
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            DialogResult dr = MessageBox.Show("Are you sure you want to close RajanMS?", "Server Shutdown", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
-
-            if (dr == System.Windows.Forms.DialogResult.No)
+            if (MasterServer.Instance.Running)
             {
+                Log("Please shutdown the server first");
                 e.Cancel = true;
             }
-            else if (dr == System.Windows.Forms.DialogResult.Yes)
-            {
+        }
 
-                MasterServer.Instance.Shutdown();
-            }
+        private void btnCreateAcc_Click(object sender, EventArgs e)
+        {
+            using (GUI.RegisterForm rf = new GUI.RegisterForm())
+                rf.ShowDialog();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace Common.Cryptography
+namespace RajanMS.Cryptography
 {
     internal sealed class AESEncryption
     {

@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
-using Common.Cryptography;
-using Common.IO;
+using RajanMS.Cryptography;
+using RajanMS.IO;
 
-namespace Common.Network
+namespace RajanMS.Network
 {
     public abstract class MapleSession
     {
@@ -25,7 +26,7 @@ namespace Common.Network
         protected abstract void OnPacket(byte[] packet);
         protected abstract void OnDisconnected();
 
-        public bool Alive
+        public bool Connected
         {
             get
             {
@@ -43,7 +44,7 @@ namespace Common.Network
             m_locker = new object();
             m_disposed = false;
 
-            Label = m_socket.RemoteEndPoint.ToString();
+            Label = ((IPEndPoint)(m_socket.RemoteEndPoint)).Address.ToString();
 
             m_sendCipher = new MapleCipher(Constants.MajorVersion, Constants.SIV, MapleCipher.TransformDirection.Encrypt);
             m_recvCipher = new MapleCipher(Constants.MajorVersion, Constants.RIV, MapleCipher.TransformDirection.Decrypt);

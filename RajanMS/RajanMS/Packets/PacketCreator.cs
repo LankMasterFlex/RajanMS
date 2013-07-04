@@ -4,8 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Common;
-using Common.IO;
+using RajanMS.IO;
 using RajanMS.Game;
 
 namespace RajanMS.Packets
@@ -29,170 +28,12 @@ namespace RajanMS.Packets
         public static byte[] Ping()
         {
             using (OutPacket p = new OutPacket(SendOps.Ping, 2))
-            {
                 return p.ToArray();
-            }
         }
+    }
 
-        public static byte[] LoginSuccess(Account acc)
-        {
-            using (OutPacket p = new OutPacket(SendOps.LoginResponse))
-            {
-                p.WriteZero(6); //byte byte int
-                p.WriteInt(acc.AccountId);
-                p.WriteByte(acc.Gender);
-                p.WriteBool(acc.GM);
-                p.WriteShort();
-                p.WriteBool(false); //admin commands
-                p.WriteMapleString(acc.Username);
-                p.WriteByte(3);
-                p.WriteByte(); //quiete ban
-                p.WriteLong(); //quiete ban time
-                p.WriteByte(1);
-                p.WriteLong(); //create time
-                p.WriteInt(4);
-                p.WriteBool(true); //disable pin
-
-                if (string.IsNullOrEmpty(acc.PIC)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
-                {
-                    p.WriteByte();
-                }
-                else
-                {
-                    p.WriteByte(1);
-                }
-
-                p.WriteLong(); //session?
-                return p.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// -1/6/8/9 : Trouble logging in
-        /// 2/3 : Id deleted or blocked
-        /// 4: Incorrect password
-        /// 5: Not a registered ID
-        /// 7: Logged in    
-        /// 10: Too many requests
-        /// 11: 20 years older can use
-        /// 13: Unable to log on as master at IP
-        /// 14/15: Redirect to nexon + buttons    
-        /// 16/21: Verify account
-        /// 17: Selected the wrong gateway
-        /// 25: Logging in outside service region
-        /// 23: License agreement
-        /// 27: Download full client
-        /// </summary>
-        /// <param name="reason"></param>
-        /// <returns></returns>
-        public static byte[] LoginFail(byte reason)
-        {
-            using (OutPacket p = new OutPacket(SendOps.LoginResponse))
-            {
-                p.WriteByte(reason);
-                p.WriteZero(6);
-                return p.ToArray();
-            }
-        }
-
-        public static byte[] Worldlist(byte serverId, string serverName, int[] loads)
-        {
-            using (OutPacket p = new OutPacket(SendOps.Worldlist))
-            {
-                p.WriteByte(serverId);
-                p.WriteMapleString(serverName);
-                p.WriteByte(); // Ribbon: 1 = E; 2 = N; 3 = H
-                p.WriteMapleString(Constants.EventMessage);
-                p.WriteShort(100);
-                p.WriteShort(100);
-                p.WriteByte();
-                p.WriteByte((byte)loads.Length);
-
-                int id = 1;
-
-                foreach (int chLoad in loads)
-                {
-                    p.WriteMapleString("{0}-{1}", serverName, id++);
-                    p.WriteInt(chLoad * 200);
-                    p.WriteByte(serverId);
-                    p.WriteShort((short)(id - 1));
-                }
-
-                /*
-                var chatBubbles = new Dictionary<Point, string>();
-
-                chatBubbles.Add(new Point(0, 265), "What the fuck is this shit?!");
-                chatBubbles.Add(new Point(500, 370), "Stolen from Rice?!");
-                
-                p.WriteShort((short)chatBubbles.Count);
-
-                foreach (KeyValuePair<Point, string> kvp in chatBubbles)
-                {
-                    p.WritePosition(kvp.Key);
-                    p.WriteMapleString(kvp.Value);
-                }
-                */
-
-                p.WriteZero(6);
-                return p.ToArray();
-            }
-        }
-
-        public static byte[] EndOfWorldlist()
-        {
-            using (OutPacket p = new OutPacket(SendOps.Worldlist, 3))
-            {
-                p.WriteShort(0xFF); //113+ controversy? nothing wrong with some padding :)
-                return p.ToArray();
-            }
-        }
-
-        /// <summary>
-        ///0 - Normal
-        ///1 - Highly populated
-        ///2 - Full
-        /// </summary>
-        /// <returns></returns>
-        public static byte[] UserLimit(byte status)
-        {
-            using (OutPacket p = new OutPacket(SendOps.ServerStatus, 4))
-            {
-                p.WriteShort(status);
-                return p.ToArray();
-            }
-        }
-
-        public static byte[] CharacterList(MapleClient c)
-        {
-            using (OutPacket p = new OutPacket(SendOps.Charlist))
-            {
-                p.WriteByte(); //idk
-
-                IEnumerable<Character> chars = c.Characters.Where((chr) => chr.WorldId == c.World); //characters in same world
-
-                p.WriteByte((byte)chars.Count());
-
-                foreach (Character chr in chars)
-                {
-                    AddCharEntry(p, chr, chr.Level >= 30, false);
-                }
-
-                if (string.IsNullOrEmpty(c.Account.PIC)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
-                {
-                    p.WriteByte(); //set
-                }
-                else
-                {
-                    p.WriteByte(1); //use
-                }
-
-                p.WriteByte();
-                p.WriteInt(3); //char slots
-                p.WriteInt();
-                return p.ToArray();
-            }
-        }
-
+    static class PacketCreatorHelper
+    {
         public static void AddCharStats(OutPacket p, Character c)
         {
             p.WriteInt(c.CharId);
@@ -216,26 +57,18 @@ namespace RajanMS.Packets
 
             if (Constants.isSeparatedSp(c.Job))
             {
-                byte length = 0;
-
-                for (int i = 0; i < c.SP.Length; i++)
-                {
-                    if (c.SP[i] > 0)
-                    {
-                        length++;
-                    }
-                }
+                byte length = (byte)c.SP.Count((b) => b > 0);
 
                 p.WriteByte(length);
 
-                for (int i = 0; i < c.SP.Length; i++)
-                {
-                    if (c.SP[i] > 0)
+                c.SP.ForAll((i) => //linq where caused issue with indexs O_O no idea how or why
                     {
-                        p.WriteByte((byte)(i + 1));
-                        p.WriteByte(c.SP[i]);
-                    }
-                }
+                        if (i > 0)
+                        {
+                            p.WriteByte((byte)(i + 1));
+                            p.WriteByte(c.SP[i]);
+                        }
+                    });
             }
             else
             {
@@ -263,8 +96,7 @@ namespace RajanMS.Packets
             p.WriteByte(c.Fatigue);
 
             p.WriteInt(0);
-
-            p.WriteInt(c.Ambition);
+            p.WriteInt(c.Ambition); //its my amibiton nigga *ross grunt*
             p.WriteInt(c.Insight);
             p.WriteInt(c.Willpower);
             p.WriteInt(c.Diligence);
@@ -283,12 +115,7 @@ namespace RajanMS.Packets
             p.WriteByte(5);
             p.WriteInt(0);
 
-            p.WriteInt((int)(DateTime.Now.ToFileTime() >> 32)); // FileTime.dwHighDateTime
-            p.WriteInt((int)(DateTime.Now.ToFileTime() << 32 >> 32)); // FileTime.dwLowDateTime
-            //p.WriteBytes(new byte[] { 0xD5, 0x64, 0xFB, 0x95, 0x37, 0x01, 0x00, 0x00 });
-            //p.WriteLong();
-            //p.WriteInt(0x95FB64D5); // dwHighDateTime // D5 64 FB 95
-            //p.WriteInt(0x137); // dwLowDateTime
+            p.WriteBytes(new byte[] { 0xD5, 0x64, 0xFB, 0x95, 0x37, 0x01, 0x00, 0x00 }); //p.WriteInt(0x95FB64D5); // dwHighDateTime // D5 64 FB 95 | p.WriteInt(0x137); // dwLowDateTime
         }
 
         public static void AddCharLook(OutPacket p, Character c, bool megaphone)
@@ -332,9 +159,194 @@ namespace RajanMS.Packets
             }
         }
 
-        public static byte[] NameAvailable(string name, bool isTaken)
+        public static void AddCharInfo(OutPacket p, Character c)
         {
-            using (OutPacket p = new OutPacket(SendOps.NameAvailable))
+            p.WriteInt(-1);
+            p.WriteInt(-3);
+            p.WriteZero(7);//5 bytes v99 [byte] [byte] [int] [byte]
+            AddCharStats(p, c);
+            p.WriteByte(); //buddylist capacity
+
+            //if true maplestring trail
+            p.WriteBool(false);//fairy blessing link
+            p.WriteBool(false); //empress blessing link
+            p.WriteBool(false); //ult explorer
+
+            //addInventoryInfo(mplew, chr);
+            //addSkillInfo(mplew, chr); // 0x100
+            //addCoolDownInfo(mplew, chr); // 0x8000
+            //addQuestInfo(mplew, chr);
+            //addRingInfo(mplew, chr);
+            //addRocksInfo(mplew, chr); // 0x1000
+            //addMonsterBookInfo(mplew, chr);
+
+            p.WriteShort();
+            p.WriteShort();// New year gift card size // 0x40000
+
+        }
+    }
+
+    static class LoginPacketCreator
+    {
+        public static byte[] LoginSuccess(Account acc, long sessionId)
+        {
+            using (OutPacket p = new OutPacket(SendOps.CheckPassword))
+            {
+                p.WriteZero(6); //byte byte int
+                p.WriteInt(acc.AccountId);
+                p.WriteByte(acc.Gender);
+                p.WriteBool(acc.GM);
+                p.WriteShort();
+                p.WriteBool(false); //admin commands
+                p.WriteMapleString(acc.Username);
+                p.WriteByte(3);
+                p.WriteByte(); //quiete ban
+                p.WriteLong(); //quiete ban time
+                p.WriteByte(1);
+                p.WriteLong(); //create time
+                p.WriteInt(4);
+                p.WriteBool(true); //disable pin OR use session (maybe both)
+
+                if (string.IsNullOrEmpty(acc.PIC)) 
+                {
+                    p.WriteByte();
+                }
+                else
+                {
+                    p.WriteByte(1);
+                }
+
+                p.WriteLong(sessionId); //jajajaja
+                return p.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// -1/6/8/9 : Trouble logging in
+        /// 2/3 : Id deleted or blocked
+        /// 4: Incorrect password
+        /// 5: Not a registered ID
+        /// 7: Logged in    
+        /// 10: Too many requests
+        /// 11: 20 years older can use
+        /// 13: Unable to log on as master at IP
+        /// 14/15: Redirect to nexon + buttons    
+        /// 16/21: Verify account
+        /// 17: Selected the wrong gateway
+        /// 25: Logging in outside service region
+        /// 23: License agreement
+        /// 27: Download full client
+        /// </summary>
+        /// <param name="reason"></param>
+        /// <returns></returns>
+        public static byte[] LoginFail(byte reason)
+        {
+            using (OutPacket p = new OutPacket(SendOps.CheckPassword, 9))
+            {
+                p.WriteByte(reason);
+                p.WriteZero(6);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] Worldlist(byte serverId, string serverName, int[] loads, params Tuple<Point, string>[] balloons)
+        {
+            using (OutPacket p = new OutPacket(SendOps.WorldInformation))
+            {
+                p.WriteByte(serverId);
+                p.WriteMapleString(serverName);
+                p.WriteByte(); // Ribbon: 1 = E; 2 = N; 3 = H
+                p.WriteMapleString(Constants.EventMessage);
+                p.WriteShort(100);
+                p.WriteShort(100);
+                p.WriteByte();
+                p.WriteByte((byte)loads.Length);
+
+                int id = 1;
+
+                foreach (int chLoad in loads)
+                {
+                    p.WriteMapleString("{0}-{1}", serverName, id++);
+                    p.WriteInt(chLoad * 200);
+                    p.WriteByte(serverId);
+                    p.WriteShort((short)(id - 1));
+                }
+                //
+
+                p.WriteShort((short)balloons.Length); //ZArray_CLogin::BALLOON_::RemoveAll((char *)v2 + 560); if 0
+
+                foreach (Tuple<Point, string> balloon in balloons)
+                {
+                    p.WritePosition(balloon.Item1);
+                    p.WriteMapleString(balloon.Item2);
+                }
+
+
+                p.WriteInt();
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] EndOfWorldlist()
+        {
+            using (OutPacket p = new OutPacket(SendOps.WorldInformation, 3))
+            {
+                p.WriteShort(0xFF); //113+ controversy? nothing wrong with some padding
+                return p.ToArray();
+            }
+        }
+
+        /// <summary>
+        ///0 - Normal
+        ///1 - Highly populated
+        ///2 - Full
+        /// </summary>
+        /// <returns></returns>
+        public static byte[] CheckUserLimit(byte status)
+        {
+            using (OutPacket p = new OutPacket(SendOps.CheckUserLimit, 4))
+            {
+                p.WriteShort(status);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] SelectWorldResult(MapleClient c)
+        {
+            using (OutPacket p = new OutPacket(SendOps.SelectWorldResult))
+            {
+                p.WriteByte(); //idk
+
+                var chars = c.Characters.Where((chr) => chr.WorldId == c.World); //characters in same world
+
+                p.WriteByte((byte)chars.Count());
+
+                foreach (Character chr in chars)
+                {
+                    PacketCreatorHelper.AddCharEntry(p, chr, chr.Level >= 30, false);
+                }
+
+                if (string.IsNullOrEmpty(c.Account.PIC)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
+                {
+                    p.WriteByte(); //set
+                }
+                else
+                {
+                    p.WriteByte(1); //use
+                }
+
+                p.WriteByte();
+                p.WriteInt(3); //char slots
+                p.WriteInt();
+                return p.ToArray();
+            }
+        }
+
+
+
+        public static byte[] CheckDuplicatedID(string name, bool isTaken)
+        {
+            using (OutPacket p = new OutPacket(SendOps.CheckDuplicatedID, 3 + name.Length))
             {
                 p.WriteMapleString(name);
                 p.WriteBool(isTaken);
@@ -342,12 +354,12 @@ namespace RajanMS.Packets
             }
         }
 
-        public static byte[] NewCharacter(Character chr)
+        public static byte[] CreateNewCharacter(Character chr)
         {
-            using (OutPacket p = new OutPacket(SendOps.CreateCharacter))
+            using (OutPacket p = new OutPacket(SendOps.CreateNewCharacter))
             {
                 p.WriteByte();
-                AddCharEntry(p, chr, false, false);
+                PacketCreatorHelper.AddCharEntry(p, chr, false, false);
                 return p.ToArray();
             }
         }
@@ -369,9 +381,112 @@ namespace RajanMS.Packets
 
         public static byte[] BadPic()
         {
-            using (OutPacket p = new OutPacket(SendOps.CheckPIC,3))
+            using (OutPacket p = new OutPacket(SendOps.CheckSPW, 3))
             {
                 p.WriteByte(0);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] ShowAllCharacter(int chars)
+        {
+            using (OutPacket p = new OutPacket(SendOps.ViewAllChar))
+            {
+                p.WriteByte(1);
+                p.WriteInt(chars);
+                p.WriteInt(chars + (3 - chars % 3)); //rowsize
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] ShowAllCharacterInfo(byte worldId, IEnumerable<Character> chars, string pic)
+        {
+            using (OutPacket p = new OutPacket(SendOps.ViewAllChar))
+            {
+                p.WriteByte(chars.Count() == 0 ? (byte)5 : (byte)0);//5 = cannot find any
+                p.WriteByte(worldId);
+                p.WriteByte((byte)chars.Count());
+
+                foreach (Character chr in chars)
+                {
+                    PacketCreatorHelper.AddCharEntry(p, chr, true, true);
+                }
+
+                if (string.IsNullOrEmpty(pic)) //p.WriteByte(2); //pic 0 = set 1= use 2 = none
+                {
+                    p.WriteByte(); //set
+                }
+                else
+                {
+                    p.WriteByte(1); //use
+                }
+
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] ServerIP(byte[] ip, short port, int charId)
+        {
+            using (OutPacket p = new OutPacket(SendOps.ServerIP))
+            {
+                p.WriteShort();
+                p.WriteBytes(ip);
+                p.WriteShort(port);
+                p.WriteInt(charId);
+                p.WriteZero(10);
+                return p.ToArray();
+            }
+        }
+
+
+    }
+
+    static class FieldPacketCreator
+    {
+        public static byte[] LoadStage(MapleClient c, int id, byte spawnpoint)
+        {
+            using (OutPacket p = new OutPacket(SendOps.LoadStage))
+            {
+                p.WriteShort(2);
+                p.WriteLong(1);
+                p.WriteLong(2);
+                p.WriteLong(c.Channel);
+                p.WriteByte();
+                p.WriteLong(2);
+                p.WriteByte();
+                p.WriteInt(id);
+                p.WriteByte(spawnpoint);
+                p.WriteInt(c.Character.HP);
+                p.WriteByte();
+                p.WriteLong(); //miliseconds
+                p.WriteInt(100);
+                p.WriteByte();
+                p.WriteByte(Constants.isResist(c.Character.Job) ? (byte)0 : (byte)1);
+                return p.ToArray();
+            }
+        }
+
+        public static byte[] LoadInitialStage(MapleClient c, int id, byte spawnpoint)
+        {
+            using (OutPacket p = new OutPacket(SendOps.LoadStage))
+            {
+                p.WriteShort(2);
+                p.WriteLong(1);
+                p.WriteLong(2);
+                p.WriteLong(c.Channel);
+                p.WriteByte();
+                p.WriteByte(1);
+                p.WriteInt();
+                p.WriteByte(1);
+                p.WriteShort();
+                p.WriteZero(3 * 4);
+                PacketCreatorHelper.AddCharInfo(p, c.Character);
+                p.WriteZero(16);
+                p.WriteLong();
+                p.WriteInt(100);
+                p.WriteByte();
+                p.WriteByte(1);
+
                 return p.ToArray();
             }
         }

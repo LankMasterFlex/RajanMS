@@ -7,7 +7,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using RajanMS.Game;
 
-namespace RajanMS
+namespace RajanMS.Tools
 {
     sealed class Database
     {
@@ -30,13 +30,12 @@ namespace RajanMS
         }
 
         /// <returns>
-        /// 0 - General error?
-        /// 1 - Success
-        /// 2 - User not found
-        /// 3 - Wrong password
-        /// 4 - Already logged in
+        /// 0 - Success
+        /// 4 - Wrong password
+        /// 5 - User not found
+        /// 7 - Already logged in
         /// </returns>
-        public int Login(MapleClient c,string user, string pass)
+        public byte Login(MapleClient c,string user, string pass)
         {
             var collection = m_database.GetCollection<Account>("accounts");
             var query = new QueryDocument("Username", user);
@@ -44,24 +43,38 @@ namespace RajanMS
             var result = collection.Find(query);
 
             if (result.Count() == 0) //username not found
-                return 2;
+                return 5;
 
             Account acc = result.ElementAt(0);
 
             if (acc.Password == pass)
             {
                 if (acc.LoggedIn)
-                    return 4;
+                    return 7;
 
                 c.Account = acc;
                 c.Characters = GetCharacters(acc);
 
-                return 1;
+                return 0;
             }
             else
             {
-                return 3;
+                return 4;
             }
+        }
+
+        public Character GetCharacter(int id)
+        {
+            var collection = m_database.GetCollection<Character>("characters");
+            var query = new QueryDocument("CharId", id);
+            return collection.Find(query).ElementAtOrDefault(0);
+        }
+
+        public Account GetAccount(int id)
+        {
+            var collection = m_database.GetCollection<Account>("accounts");
+            var query = new QueryDocument("AccountId", id);
+            return collection.Find(query).ElementAtOrDefault(0);
         }
 
         public List<Character> GetCharacters(Account a)
@@ -83,12 +96,30 @@ namespace RajanMS
         {
             var collection = m_database.GetCollection<Character>("characters");
             
-            int id = 0;
+            int id = -1;
 
             foreach (Character c in collection.FindAll())
             {
                 if (c.CharId > id)
                     id = c.CharId;
+            }
+
+            if (id == -1) //no characters
+                return 100; //base
+
+            return id + 1;
+        }
+
+        public int GetNewAccountId()
+        {
+            var collection = m_database.GetCollection<Account>("accounts");
+
+            int id = -1;
+
+            foreach (Account c in collection.FindAll())
+            {
+                if (c.AccountId > id)
+                    id = c.AccountId;
             }
 
             return id + 1;
@@ -107,6 +138,16 @@ namespace RajanMS
         public void SaveCharacter(Character c)
         {
             m_database.GetCollection<Character>("characters").Save(c);
+        }
+
+        public void SetAllOffline()
+        {
+            var lol = m_database.GetCollection<Account>("accounts");
+
+            foreach (Account acc in lol.FindAll())
+            {
+                acc.LoggedIn = false;
+            }
         }
     }
 }
