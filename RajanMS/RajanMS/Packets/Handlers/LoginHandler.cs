@@ -5,6 +5,8 @@ using System.Linq;
 using RajanMS.IO;
 using RajanMS.Game;
 using RajanMS.Servers;
+using reNX;
+using reNX.NXProperties;
 
 namespace RajanMS.Packets.Handlers
 {
@@ -26,6 +28,8 @@ namespace RajanMS.Packets.Handlers
             string pass = p.ReadMapleString();
 
             byte loginResult = MasterServer.Instance.Database.Login(c, user, pass);
+
+            //TODO: Write banning
 
             if (loginResult == 0)
             {
@@ -56,19 +60,18 @@ namespace RajanMS.Packets.Handlers
         {
             byte world = p.ReadByte();
 
-            if (world < 0 || world > MasterServer.Instance.Worlds.Length)
+            if (!MasterServer.Instance.Worlds.InRange(world))
             {
                 return;
             }
 
             int current = MasterServer.Instance.Worlds[world].CurrentLoad;
-            int max = Constants.MaxPlayers;
 
-            if (current >= max) //full
+            if (current >= Constants.MaxPlayers) //full
             {
                 c.WritePacket(LoginPacketCreator.CheckUserLimit(2));
             }
-            else if (current * 2 >= max) //half full
+            else if (current * 2 >= Constants.MaxPlayers) //half full
             {
                 c.WritePacket(LoginPacketCreator.CheckUserLimit(1));
             }
@@ -108,7 +111,6 @@ namespace RajanMS.Packets.Handlers
             if (MasterServer.Instance.Worlds.InRange(c.World) == false ||
                 MasterServer.Instance.Worlds[c.World].Channels.InRange(c.Channel) == false)
             {
-                c.Close();
                 return;
             }
 
@@ -170,7 +172,7 @@ namespace RajanMS.Packets.Handlers
                 shield = 1352000; //magic arrows
 
             Character newChr = new Character();
-
+            //newChr.Job = -1;
             switch (jobType)
             {
                 case 0:
@@ -195,6 +197,57 @@ namespace RajanMS.Packets.Handlers
                     newChr.Job = (short)Constants.Job.DemonSlayer;
                     break;
             }
+
+            /*
+            if(newChr.Job == -1)
+            {
+                c.Close(); //hax
+                return;
+            }
+
+            string jobStr = newChr.Job.ToString();
+
+            if (jobStr == "0") //pad for beginner node
+                jobStr = "000";
+
+            string genderStr = gender == 0 ? "male" : "female";
+
+            NXFile etcNX = MasterServer.Instance.Provider.EtcNX;
+            NXNode reqNode = etcNX.BaseNode["MakeCharInfo.img"][jobStr][genderStr];
+
+            bool isEligable = true;
+
+            foreach (NXNode node in reqNode)
+            {
+                switch (node.Name)
+                {
+                    case "0":
+                        isEligable = TestRequireIdNode(node, face);
+                        break;
+                    case "1":
+                        isEligable = TestRequireIdNode(node, hair);
+                        break;
+                    case "2":
+                        isEligable = TestRequireIdNode(node, haircolor);
+                        break;
+                    case "3":
+                        break;
+                    case "4":
+                        break;
+                    case "5":
+                        break;
+                    case "6":
+                        break;
+                    case "7":
+                        break;
+                }
+
+                if (isEligable == false)
+                    break;
+            }
+
+            */
+
 
             newChr.AccountId = c.Account.AccountId;
             newChr.WorldId = c.World;
@@ -223,6 +276,25 @@ namespace RajanMS.Packets.Handlers
             c.WritePacket(LoginPacketCreator.CreateNewCharacter(newChr));
         }
 
+        private static bool TestRequireIdNode(NXNode node, int req)
+        {
+            foreach (NXNode child in node)
+            {
+                int val = child.ValueOrDefault<int>(-1);
+
+                if (val == -1)
+                {
+                    MainForm.Instance.Log("[LoginHandler.TestRequireIdNode] Node value returned default");
+                    continue;
+                }
+
+                if (val == req)
+                    return true;
+            }
+
+            return false;
+        }
+
         public static void HandleDeleteCharacter(MapleClient c, InPacket p)
         {
             if (!c.Account.LoggedIn) { return; }
@@ -236,15 +308,9 @@ namespace RajanMS.Packets.Handlers
             }
             else
             {
-                Character target = default(Character);
+                Character target = c.Characters.FindOne((chr) => chr.CharId == cid);
 
-                foreach (Character chr in c.Characters)
-                {
-                    if (chr.CharId == cid)
-                        target = chr;
-                }
-
-                if (target != default(Character))
+                if (target != default(Character)) //findone return
                 {
                     MasterServer.Instance.Database.DeleteCharacter(target);
                     c.Characters.Remove(target); //no charlist reappear!
@@ -252,7 +318,7 @@ namespace RajanMS.Packets.Handlers
                 }
                 else
                 {
-                    c.Close(); //hackers mang
+                    c.Close(); //hackers mang smh
                 }
             }
         }
@@ -303,12 +369,19 @@ namespace RajanMS.Packets.Handlers
 
         private static void MigrateClient(int charId, MapleClient c)
         {
+            int count = c.Characters.Count((chr) => chr.CharId == charId);
+
+            if (count != 1) //does not have character
+            {
+                c.Close();
+                return;
+            }
+
             byte[] ip = new byte[] { 8, 31, 98, 52 }; //loop me back plz =)
 
             short port = MasterServer.Instance.Worlds[c.World].Channels[c.Channel].Port;
 
-            MigrateRequest mr = new MigrateRequest(charId, c.SessionId);
-            MasterServer.Instance.Worlds[c.World].AddMigrationRequest(mr);
+            MasterServer.Instance.Worlds[c.World].AddMigrationRequest(charId, c.SessionId);
             
             c.WritePacket(LoginPacketCreator.ServerIP(ip, port, charId));
         }

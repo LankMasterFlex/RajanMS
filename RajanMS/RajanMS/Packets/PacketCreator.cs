@@ -127,6 +127,8 @@ namespace RajanMS.Packets
             p.WriteByte(megaphone ? (byte)0 : (byte)1);
             p.WriteInt(c.HairId);
 
+        //    c.Inventory[InventoryType.EQUIP]
+
             //TO WRITE INVENTORY UGH
             p.WriteByte(255);
             p.WriteByte(255);

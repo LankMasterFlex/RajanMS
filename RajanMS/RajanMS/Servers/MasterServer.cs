@@ -17,11 +17,13 @@ namespace RajanMS.Servers
         public LoginServer LoginServer { get; private set; }
         public WorldServer[] Worlds { get; private set; }
         public Database Database { get; private set; }
+        public DataProvider Provider { get; private set; }
 
         public ConfigReader Config { get; private set; }
 
         public MasterServer()
         {
+            Provider = new DataProvider();
             Config = new ConfigReader(Constants.ConfigName);
 
             Database = new Database(Config["Database", "Host"], Config["Database", "Name"]);
@@ -49,6 +51,12 @@ namespace RajanMS.Servers
 
         public void Run()
         {
+            DateTime start = DateTime.Now;
+            Provider.Cache();
+            DateTime finish = DateTime.Now;
+
+            MainForm.Instance.Log("Loaded NX files in {0}ms", (finish - start).Milliseconds);
+
             LoginServer.Run();
 
             foreach (WorldServer ws in Worlds)

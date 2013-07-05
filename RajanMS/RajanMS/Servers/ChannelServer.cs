@@ -78,11 +78,8 @@ namespace RajanMS.Servers
         public void Shutdown()
         {
             m_acceptor.Stop();
-
-            for (int i = 0; i < m_clients.Count; i++)
-                m_clients[i].Close();
-
-            m_clients.Clear();
+            m_clients.InvertedFor((mc) => mc.Close());
+            //m_clients.Clear();
         }
     }
 }

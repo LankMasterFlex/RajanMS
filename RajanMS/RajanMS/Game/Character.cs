@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace RajanMS.Game
 {
@@ -14,7 +15,11 @@ namespace RajanMS.Game
         public Character()
         {
             SP = new byte[4];
+            Inventory = new Dictionary<InventoryType, Inventory>(6);
         }
+
+        [BsonIgnore]
+        public Dictionary<InventoryType, Inventory> Inventory { get; private set; }
 
         public int AccountId { get; set; }
         public byte WorldId { get; set; }

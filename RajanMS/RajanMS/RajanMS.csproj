@@ -39,6 +39,9 @@
     <Reference Include="MongoDB.Driver">
       <HintPath>..\..\..\..\..\Downloads\CSharpDriver-1.8.1\MongoDB.Driver.dll</HintPath>
     </Reference>
+    <Reference Include="reNX">
+      <HintPath>..\..\..\..\..\..\..\Jews Vault\reNX\reNX.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,6 +59,7 @@
     <Compile Include="Core\Cryptography\AESEncryption.cs" />
     <Compile Include="Core\Cryptography\CustomEncryption.cs" />
     <Compile Include="Core\Cryptography\MapleCipher.cs" />
+    <Compile Include="Game\Inventory.cs" />
     <Compile Include="Servers\MigrateRequest.cs" />
     <Compile Include="GUI\RegisterForm.cs">
       <SubType>Form</SubType>
@@ -93,6 +97,7 @@
     <Compile Include="Servers\WorldServer.cs" />
     <Compile Include="Tools\ConfigReader.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Tools\DataProvider.cs" />
     <Compile Include="Tools\Randomizer.cs" />
     <EmbeddedResource Include="GUI\RegisterForm.resx">
       <DependentUpon>RegisterForm.cs</DependentUpon>

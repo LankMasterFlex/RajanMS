@@ -16,21 +16,20 @@ namespace RajanMS.Packets.Handlers
             p.Skip(18);
             long sessionId = p.ReadLong();
 
-            MigrateRequest mr = new MigrateRequest(charId, sessionId);
-
-            if (MasterServer.Instance.Worlds[c.World].EligableMigration(mr))
+            if (MasterServer.Instance.Worlds[c.World].EligableMigration(charId,sessionId))
             {
                 c.SessionId = sessionId;
                 c.Character = MasterServer.Instance.Database.GetCharacter(charId);
                 c.Account = MasterServer.Instance.Database.GetAccount(c.Character.AccountId);
 
-                if (c.Account.LoggedIn) //i dont know what to do,  should never happpen though
+                if (c.Account.LoggedIn) //i dont know what to do, should never happpen though
                 {
                     c.Close(); return;
                 }
 
                 c.Account.LoggedIn = true;
 
+                MainForm.Instance.Log("[{0}] Migration success", c.Label); //debugging
                 //c.WritePacket(FieldPacketCreator.LoadInitialStage(c, c.Character.MapId, 0));
             }
             else

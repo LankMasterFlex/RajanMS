@@ -14,7 +14,7 @@ namespace RajanMS.Servers
         public byte Id { get; private set; }
         public ChannelServer[] Channels { get; private set; }
 
-        private BlockingList<MigrateRequest> m_migrateReqs;
+        private List<MigrateRequest> m_migrateReqs;
 
         public WorldServer(byte id,short port,int channels)
         {
@@ -27,7 +27,7 @@ namespace RajanMS.Servers
                 port++;
             }
 
-            m_migrateReqs = new BlockingList<MigrateRequest>();
+            m_migrateReqs = new List<MigrateRequest>();
         }
 
         public void Run()
@@ -54,44 +54,44 @@ namespace RajanMS.Servers
             }
         }
 
-        public void AddMigrationRequest(MigrateRequest mr)
+        public void AddMigrationRequest(int charId,long sessionId)
         {
-            m_migrateReqs.Add(mr);
+            lock (m_migrateReqs)
+            {
+                m_migrateReqs.Add(new MigrateRequest(charId, sessionId));
+            }
         }
 
-        public bool EligableMigration(MigrateRequest mr)
+        public bool EligableMigration(int charId,long sessionId)
         {
-            bool found = false;
-
-            m_migrateReqs.ForEach((itr) =>
+            lock (m_migrateReqs)
+            {
+                //iterate backwards so when removing item, indexes dont change
+                for (int i = m_migrateReqs.Count; i-- > 0; )
                 {
-                    if ((DateTime.Now - mr.Expiry).Minutes > 1)
+                    MigrateRequest itr = m_migrateReqs[i];
+
+                    if ((DateTime.Now - itr.Expiry).Seconds > 30) //30 second migration time
                     {
-                        m_migrateReqs.EnqueRemove(itr);
-                        return;
+                        m_migrateReqs.Remove(itr);
+                        continue; //skip itr
                     }
 
-                    if (found) //still iterate times but if found no need to check legitimacy
-                        return;
-
-                    if (itr.CharacterId == mr.CharacterId &&
-                        itr.SessionId == mr.SessionId)
+                    if (itr.CharacterId == charId && itr.SessionId == sessionId)
                     {
-                        m_migrateReqs.EnqueRemove(itr);
-                        found = true;
-                        return;
+                        m_migrateReqs.Remove(itr);
+                        return true;
                     }
 
-                });
+                }
+            }
 
-            m_migrateReqs.DispatchRemoval();
-
-            return found;
+            return false;
         }
 
         public int[] GetChannelLoads()
         {
-            int[] final = new int[Channels.Length];
+            var final = new int[Channels.Length];
 
             for (int i = 0; i < final.Length; i++)
             {

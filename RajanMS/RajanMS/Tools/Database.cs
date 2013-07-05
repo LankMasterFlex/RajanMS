@@ -5,28 +5,26 @@ using System.Text;
 using MongoDB;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Builders;
 using RajanMS.Game;
 
 namespace RajanMS.Tools
 {
     sealed class Database
     {
-        MongoClient m_client;
-        MongoServer m_server;
-        MongoDatabase m_database;
+        private readonly MongoDatabase m_database;
 
         public Database(string host,string databaseName)
         {
-            m_client = new MongoClient(host);
-            m_server = m_client.GetServer();
-            m_database = m_server.GetDatabase(databaseName);
+            var client = new MongoClient(host);
+            var server = client.GetServer();
+            m_database = server.GetDatabase(databaseName);
         }
 
         public bool NameAvailable(string name)
         {
-            var collection = m_database.GetCollection<BsonDocument>("characters");
-            var query = new QueryDocument("Name", name);    
-            return collection.Find(query).Count() > 0;
+            var query = new QueryDocument("Name", name);
+            return m_database.GetCollection<BsonDocument>("characters").FindOne(query) != null;
         }
 
         /// <returns>
@@ -40,12 +38,10 @@ namespace RajanMS.Tools
             var collection = m_database.GetCollection<Account>("accounts");
             var query = new QueryDocument("Username", user);
 
-            var result = collection.Find(query);
+            Account acc = collection.FindOne(query);
 
-            if (result.Count() == 0) //username not found
+            if (acc == null)//username not found
                 return 5;
-
-            Account acc = result.ElementAt(0);
 
             if (acc.Password == pass)
             {
@@ -63,33 +59,21 @@ namespace RajanMS.Tools
             }
         }
 
-        public Character GetCharacter(int id)
-        {
-            var collection = m_database.GetCollection<Character>("characters");
-            var query = new QueryDocument("CharId", id);
-            return collection.Find(query).ElementAtOrDefault(0);
-        }
-
         public Account GetAccount(int id)
         {
-            var collection = m_database.GetCollection<Account>("accounts");
             var query = new QueryDocument("AccountId", id);
-            return collection.Find(query).ElementAtOrDefault(0);
+            return m_database.GetCollection<Account>("accounts").FindOne(query);
+        }
+        public Character GetCharacter(int id)
+        {
+            var query = new QueryDocument("CharId", id);
+            return m_database.GetCollection<Character>("characters").FindOne(query);
         }
 
         public List<Character> GetCharacters(Account a)
         {
-            var x = new List<Character>();
-
-            var collection = m_database.GetCollection<Character>("characters");
             var query = new QueryDocument("AccountId", a.AccountId);
-
-            var result = collection.Find(query);
-
-            foreach (Character c in result)
-                x.Add(c);
-
-            return x;
+            return m_database.GetCollection<Character>("characters").Find(query).ToList();
         }
 
         public int GetNewCharacterId()
@@ -109,7 +93,6 @@ namespace RajanMS.Tools
 
             return id + 1;
         }
-
         public int GetNewAccountId()
         {
             var collection = m_database.GetCollection<Account>("accounts");
@@ -142,12 +125,9 @@ namespace RajanMS.Tools
 
         public void SetAllOffline()
         {
-            var lol = m_database.GetCollection<Account>("accounts");
-
-            foreach (Account acc in lol.FindAll())
-            {
-                acc.LoggedIn = false;
-            }
+            var query = new QueryDocument("LoggedIn", true);
+            var update = Update.Set("LoggedIn", false);
+            m_database.GetCollection<Account>("accounts").Update(query, update, UpdateFlags.Multi);
         }
     }
 }

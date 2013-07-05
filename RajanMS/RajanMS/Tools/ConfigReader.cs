@@ -22,7 +22,11 @@ namespace RajanMS.Tools
         {
             get
             {
-                return ReadString(section, key);
+                StringBuilder temp = new StringBuilder(255);
+
+                GetPrivateProfileString(section, key, string.Empty, temp, 255, Path);
+
+                return temp.ToString();
             }
         }
 
@@ -35,15 +39,6 @@ namespace RajanMS.Tools
                 throw new Exception("Cannont find file");
 
             Path = filePath;
-        }
-
-        public string ReadString(string section, string key)
-        {
-            StringBuilder temp = new StringBuilder(255);
-            
-            GetPrivateProfileString(section, key, string.Empty, temp, 255, Path);
-            
-            return temp.ToString();
         }
     }
 }
