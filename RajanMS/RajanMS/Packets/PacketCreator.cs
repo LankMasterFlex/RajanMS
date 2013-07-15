@@ -127,7 +127,7 @@ namespace RajanMS.Packets
             p.WriteByte(megaphone ? (byte)0 : (byte)1);
             p.WriteInt(c.HairId);
 
-        //    c.Inventory[InventoryType.EQUIP]
+            //    c.Inventory[InventoryType.EQUIP]
 
             //TO WRITE INVENTORY UGH
             p.WriteByte(255);
@@ -209,7 +209,7 @@ namespace RajanMS.Packets
                 p.WriteInt(4);
                 p.WriteBool(true); //disable pin OR use session (maybe both)
 
-                if (string.IsNullOrEmpty(acc.PIC)) 
+                if (string.IsNullOrEmpty(acc.PIC))
                 {
                     p.WriteByte();
                 }
@@ -251,7 +251,7 @@ namespace RajanMS.Packets
             }
         }
 
-        public static byte[] Worldlist(byte serverId, string serverName, int[] loads, params Tuple<Point, string>[] balloons)
+        public static byte[] Worldlist(byte serverId, string serverName, int[] loads, params BalloonInfo[] balloons)
         {
             using (OutPacket p = new OutPacket(SendOps.WorldInformation))
             {
@@ -277,10 +277,10 @@ namespace RajanMS.Packets
 
                 p.WriteShort((short)balloons.Length); //ZArray_CLogin::BALLOON_::RemoveAll((char *)v2 + 560); if 0
 
-                foreach (Tuple<Point, string> balloon in balloons)
+                foreach (BalloonInfo balloon in balloons)
                 {
-                    p.WritePosition(balloon.Item1);
-                    p.WriteMapleString(balloon.Item2);
+                    p.WritePosition(balloon.Position);
+                    p.WriteMapleString(balloon.Text);
                 }
 
 
@@ -493,4 +493,11 @@ namespace RajanMS.Packets
             }
         }
     }
+
+    public struct BalloonInfo
+    {
+        public Point Position { get; set; }
+        public string Text { get; set; }
+    }
+
 }
