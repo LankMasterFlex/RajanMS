@@ -1,31 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Net.Sockets;
-using RajanMS.Network;
+﻿using System.Net.Sockets;
 using RajanMS.Packets;
 using RajanMS.Packets.Handlers;
 
 namespace RajanMS.Servers
 {
-    class LoginServer
+    public sealed class LoginServer : ServerBase
     {
-        private Acceptor m_acceptor;
-        private List<MapleClient> m_clients;
-        private PacketProcessor m_processor;
+        public LoginServer(short port) : base(port) { }
 
-        public LoginServer(short port)
-        {
-            m_acceptor = new Acceptor(port);
-            m_acceptor.OnClientAccepted = OnClientAccepted;
-
-            m_clients = new List<MapleClient>();
-
-            SpawnHandlers();
-        }
-
-        private void SpawnHandlers()
+        protected override void SpawnHandlers()
         {
             m_processor = new PacketProcessor("Login");
-        
+
             m_processor.AppendHandler(RecvOps.Validate, LoginHandler.HandleValidate);
             m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
             m_processor.AppendHandler(RecvOps.WorldInfoRequest, LoginHandler.HandleWorldInfoRequest);
@@ -47,29 +33,25 @@ namespace RajanMS.Servers
             m_processor.AppendHandler(RecvOps.ClientException, GeneralHandler.HandleClientException);
         }
 
-        private void OnClientAccepted(Socket client)
+        protected override void OnClientAccepted(Socket client)
         {
-            MapleClient mc = new MapleClient(client, m_processor, m_clients.Remove)
+            MapleClient mc = new MapleClient(client,this, m_processor)
             {
                 SessionId = Tools.Randomizer.Generate(),
             };
-            m_clients.Add(mc);
 
-            mc.WriteRawPacket(PacketCreator.Handshake());
+            mc.SendRaw(PacketCreator.Handshake());
             MainForm.Instance.Log("[Login] Accepted client {0}", mc.Label);
         }
-
-        public void Run()
+        public override void Run()
         {
             m_acceptor.Start();
             MainForm.Instance.Log("LoginServer listening on port {0}", m_acceptor.Port);
         }
-
-        public void Shutdown()
+        public override void Shutdown()
         {
             m_acceptor.Stop();
-            m_clients.InvertedFor((mc) => mc.Close());
-            //m_clients.Clear();
+            m_clients.ToArray().ForAll((mc) => mc.Close());
         }
     }
 }

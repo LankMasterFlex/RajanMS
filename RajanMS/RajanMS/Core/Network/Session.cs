@@ -1,27 +1,25 @@
 ﻿using System;
-using System.Net;
 using System.Net.Sockets;
+using RajanMS.Core.IO;
 using RajanMS.Cryptography;
-using RajanMS.IO;
 
 namespace RajanMS.Network
 {
-    public abstract class MapleSession
+    public abstract class Session
     {
-        public string Label { get; private set; }
+        public const byte HeaderSize = 4;
 
         private readonly Socket m_socket;
+        private readonly MapleCipher m_sendCipher;
+        private readonly MapleCipher m_recvCipher;
 
-        private MapleCipher m_sendCipher;
-        private MapleCipher m_recvCipher;
-
-        private bool m_header;
         private int m_offset;
+
         private byte[] m_buffer;
+        private byte[] m_packet;
 
         private object m_locker;
-        private bool m_disposed;
-
+        private bool m_connected;
 
         protected abstract void OnPacket(byte[] packet);
         protected abstract void OnDisconnected();
@@ -30,44 +28,33 @@ namespace RajanMS.Network
         {
             get
             {
-                return !m_disposed;
+                return m_connected;
             }
         }
 
-        public MapleSession(Socket socket)
+        public Session(Socket socket)
         {
             m_socket = socket;
-            m_socket.NoDelay = true;
-            m_socket.ReceiveBufferSize = 0xFFFF;
-            m_socket.SendBufferSize = 0xFFFF;
+
+            m_buffer = BufferPool.Get();
+            m_packet = BufferPool.Get();
 
             m_locker = new object();
-            m_disposed = false;
-
-            Label = ((IPEndPoint)(m_socket.RemoteEndPoint)).Address.ToString();
+            m_connected = true;
 
             m_sendCipher = new MapleCipher(Constants.MajorVersion, Constants.SIV, MapleCipher.TransformDirection.Encrypt);
             m_recvCipher = new MapleCipher(Constants.MajorVersion, Constants.RIV, MapleCipher.TransformDirection.Decrypt);
 
-            WaitForData(true, 4);
+            BeginRead();
         }
 
-        private void WaitForData(bool header, int size)
+        private void BeginRead()
         {
-            if (m_disposed) { return; }
+            if (!m_connected) { return; }
 
-            m_header = header;
-            m_offset = 0;
-            m_buffer = new byte[size];
-
-            BeginRead(m_buffer.Length);
-        }
-
-        private void BeginRead(int size)
-        {
             SocketError outError = SocketError.Success;
 
-            m_socket.BeginReceive(m_buffer, m_offset, size, SocketFlags.None, out outError, ReadCallback, null);
+            m_socket.BeginReceive(m_buffer, 0, m_buffer.Length, SocketFlags.None, out outError, ReadCallback, null);
 
             if (outError != SocketError.Success)
             {
@@ -77,54 +64,62 @@ namespace RajanMS.Network
 
         private void ReadCallback(IAsyncResult iar)
         {
-            if (m_disposed) { return; }
+            if (!m_connected) { return; }
 
             SocketError error;
             int received = m_socket.EndReceive(iar, out error);
 
-            if (received ==  0 ||error != SocketError.Success)
+            if (received == 0 || error != SocketError.Success)
             {
                 Close();
                 return;
             }
 
-            m_offset += received;
+            Append(received);
+            ManipulateBuffer();
+            BeginRead();
+        }
+        private void Append(int length)
+        {
+            if (m_packet.Length - m_offset < length)
+            {
+                int newSize = m_packet.Length * 2;
 
-            if (m_offset == m_buffer.Length)
-            {
-                HandleStream();
+                while (newSize < m_offset + length)
+                    newSize *= 2;
+
+                Array.Resize<byte>(ref m_packet, newSize);
             }
-            else
+
+            Buffer.BlockCopy(m_buffer, 0, m_packet, m_offset, length);
+
+            m_offset += length;
+        }
+        private void ManipulateBuffer()
+        {
+            while (m_offset > HeaderSize) //header room
             {
-                BeginRead(m_buffer.Length - m_offset);
+                int packetSize = MapleCipher.GetPacketLength(m_packet);
+
+                if (m_offset < packetSize + HeaderSize) //header + packet room
+                    break;
+
+                byte[] packetBuffer = new byte[packetSize];
+                Buffer.BlockCopy(m_packet, 4, packetBuffer, 0, packetSize); //copy packet
+                m_recvCipher.Transform(packetBuffer); //decrypt
+
+                m_offset -= packetSize + HeaderSize; //fix len
+
+                if (m_offset > 0) //move reamining bytes
+                    Buffer.BlockCopy(m_packet, packetSize + HeaderSize, m_packet, 0, m_offset);
+
+                OnPacket(packetBuffer);
             }
         }
 
-        private void HandleStream()
+        public void Send(params byte[][] packets)
         {
-            if (m_header)
-            {
-                int size = MapleCipher.GetPacketLength(m_buffer);
-
-                if (size > m_socket.ReceiveBufferSize || !m_recvCipher.CheckServerPacket(m_buffer, 0))
-                {
-                    Close();
-                    return;
-                }
-
-                WaitForData(false, size);
-            }
-            else
-            {
-                m_recvCipher.Transform(m_buffer);
-                OnPacket(m_buffer);
-                WaitForData(true, 4);
-            }
-        }
-
-        public void WritePacket(params byte[][] packets)
-        {
-            if (m_disposed) { return; }
+            if (!m_connected) { return; }
 
             lock (m_locker)
             {
@@ -142,7 +137,7 @@ namespace RajanMS.Network
                 foreach (byte[] buffer in packets)
                 {
                     m_sendCipher.GetHeaderToClient(finalPacket, offset, buffer.Length);
-                    
+
                     offset += 4; //header space
 
                     m_sendCipher.Transform(buffer);
@@ -151,13 +146,12 @@ namespace RajanMS.Network
                     offset += buffer.Length; //packet space
                 }
 
-                WriteRawPacket(finalPacket); //send the giant crypted packet
+                SendRaw(finalPacket); //send the giant crypted packet
             }
         }
-
-        public void WriteRawPacket(byte[] packet)
+        public void SendRaw(byte[] packet)
         {
-            if (m_disposed) { return; }
+            if (!m_connected) { return; }
 
             int offset = 0;
 
@@ -183,24 +177,21 @@ namespace RajanMS.Network
 
         public void Dispose()
         {
-            if (!m_disposed)
+            if (m_connected)
             {
-                m_disposed = true;
+                m_connected = false;
 
                 m_socket.Shutdown(SocketShutdown.Both);
                 m_socket.Close();
 
-                if (m_sendCipher != null)
-                    m_sendCipher.Dispose();
-                if (m_recvCipher != null)
-                    m_recvCipher.Dispose();
-
                 m_offset = 0;
-                m_buffer = null;
-                
-                m_sendCipher = null;
-                m_recvCipher = null;
 
+                BufferPool.Put(m_buffer);
+
+                if (m_packet.Length == BufferPool.BufferSize)
+                    BufferPool.Put(m_packet);
+                else
+                    m_packet = null;
 
                 OnDisconnected();
             }

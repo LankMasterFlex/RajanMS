@@ -2,8 +2,10 @@
 
 namespace RajanMS.Cryptography
 {
-    public sealed class MapleCipher : IDisposable
+    internal sealed class MapleCipher
     {
+        private const int IvLength = 4;
+
         private static readonly byte[] sShuffle = new byte[256]
         {
             0xEC, 0x3F, 0x77, 0xA4, 0x45, 0xD0, 0x71, 0xBF, 0xB7, 0x98, 0x20, 0xFC, 0x4B, 0xE9, 0xB3, 0xE1,
@@ -49,20 +51,58 @@ namespace RajanMS.Cryptography
         {
             m_majorVersion = majorVersion;
 
-            m_IV = new byte[4];
-            Buffer.BlockCopy(IV, 0, m_IV, 0, 4);
+            m_IV = new byte[IvLength];
+            Buffer.BlockCopy(IV, 0, m_IV, 0, IvLength);
 
             m_direction = transformDirection;
-
-            //Like i just cant deal with a cmp every time idk
             m_transformer = m_direction == TransformDirection.Encrypt ? new Action<byte[]>(EncryptTransform) : new Action<byte[]>(DecryptTransform);
         }
 
         public void Transform(byte[] data)
         {
             m_transformer(data);
-            byte[] newIV = Shuffle(m_IV);
-            m_IV = newIV;
+
+
+            byte[] start = new byte[4] { 0xF2, 0x53, 0x50, 0xC6 };
+
+            for (int i = 0; i < 4; i++) //IV shuffle
+            {
+                byte inputByte = m_IV[i];
+
+                byte a = start[1];
+                byte b = a;
+                uint c, d;
+                b = sShuffle[b];
+                b -= inputByte;
+                start[0] += b;
+                b = start[2];
+                b ^= sShuffle[inputByte];
+                a -= b;
+                start[1] = a;
+                a = start[3];
+                b = a;
+                a -= start[0];
+                b = sShuffle[b];
+                b += inputByte;
+                b ^= start[2];
+                start[2] = b;
+                a += sShuffle[inputByte];
+                start[3] = a;
+
+                c = (uint)(start[0] + start[1] * 0x100 + start[2] * 0x10000 + start[3] * 0x1000000);
+                d = c;
+                c >>= 0x1D;
+                d <<= 0x03;
+                c |= d;
+                start[0] = (byte)(c % 0x100);
+                c /= 0x100;
+                start[1] = (byte)(c % 0x100);
+                c /= 0x100;
+                start[2] = (byte)(c % 0x100);
+                start[3] = (byte)(c / 0x100);
+            }
+
+            Buffer.BlockCopy(start, 0, m_IV, 0, m_IV.Length);
         }
 
         private void EncryptTransform(byte[] data)
@@ -109,55 +149,6 @@ namespace RajanMS.Cryptography
             int c = packet[offset + 1] ^ m_IV[3];
             int d = m_majorVersion >> 8;
             return (a == b && c == d);
-        }
-
-        private static byte[] Shuffle(byte[] IV)
-        {
-            byte[] start = new byte[4] { 0xF2, 0x53, 0x50, 0xC6 };
-            for (int i = 0; i < 4; i++)
-            {
-
-                byte inputByte = IV[i];
-
-                byte a = start[1];
-                byte b = a;
-                uint c, d;
-                b = sShuffle[b];
-                b -= inputByte;
-                start[0] += b;
-                b = start[2];
-                b ^= sShuffle[inputByte];
-                a -= b;
-                start[1] = a;
-                a = start[3];
-                b = a;
-                a -= start[0];
-                b = sShuffle[b];
-                b += inputByte;
-                b ^= start[2];
-                start[2] = b;
-                a += sShuffle[inputByte];
-                start[3] = a;
-
-                c = (uint)(start[0] + start[1] * 0x100 + start[2] * 0x10000 + start[3] * 0x1000000);
-                d = c;
-                c >>= 0x1D;
-                d <<= 0x03;
-                c |= d;
-                start[0] = (byte)(c % 0x100);
-                c /= 0x100;
-                start[1] = (byte)(c % 0x100);
-                c /= 0x100;
-                start[2] = (byte)(c % 0x100);
-                start[3] = (byte)(c / 0x100);
-            }
-            return start;
-        }
-
-        public void Dispose()
-        {
-            m_transformer = null;
-            m_IV = null;
         }
     }
 }

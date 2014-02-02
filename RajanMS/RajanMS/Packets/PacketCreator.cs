@@ -499,5 +499,4 @@ namespace RajanMS.Packets
         public Point Position { get; set; }
         public string Text { get; set; }
     }
-
 }

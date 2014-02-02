@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using RajanMS.Game;
+using RajanMS.GUI;
 using RajanMS.Servers;
 using RajanMS.Tools;
 
@@ -28,7 +29,7 @@ namespace RajanMS
             InitializeComponent();
             m_logFunc = new LogDelegate(Log);
 
-            Text += string.Concat(" v",Constants.MajorVersion, '.', Constants.MinorVersion);
+            Text = string.Concat("RajanMS v", Constants.MajorVersion, '.', Constants.MinorVersion);
 
             MasterServer.Instance = new MasterServer();
         }
@@ -42,15 +43,14 @@ namespace RajanMS
             }
             else
             {
-                string header = DateTime.Now.ToString("HH:mm:ss ");
-                string final = string.Format(fmt, args);
+                string message = string.Concat(DateTime.Now.ToString("[HH:mm:ss] "),
+                                               string.Format(fmt, args),
+                                               Environment.NewLine);
 
                 if (textBoxLog.Lines.Length > 100)
                     textBoxLog.Clear();
 
-                textBoxLog.AppendText(header);
-                textBoxLog.AppendText(final);
-                textBoxLog.AppendText(Environment.NewLine);
+                textBoxLog.AppendText(message);
                 textBoxLog.ScrollToCaret();
             }
         }
@@ -64,7 +64,7 @@ namespace RajanMS
             }
             else
             {
-                DialogResult dr = MessageBox.Show("Are you sure you want to shutdown?", "Server Shutdown", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+                var dr = MessageBox.Show("Are you sure you want to shutdown?", "Server Shutdown", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
 
                 if (dr == DialogResult.Yes)
                 {
@@ -85,8 +85,8 @@ namespace RajanMS
 
         private void btnCreateAcc_Click(object sender, EventArgs e)
         {
-            using (GUI.RegisterForm rf = new GUI.RegisterForm())
-                rf.ShowDialog();
+            using (var gui = new RegisterForm())
+                gui.ShowDialog();
         }
     }
 }

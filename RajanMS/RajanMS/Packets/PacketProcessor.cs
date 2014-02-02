@@ -29,6 +29,9 @@ namespace RajanMS.Packets
 
         public void AppendHandler(short opcode, PacketHandler handler)
         {
+            if (m_handlers[opcode] != null)
+                throw new InvalidOperationException("Handler already set");
+
             m_handlers[opcode] = handler;
             m_count++;
         }

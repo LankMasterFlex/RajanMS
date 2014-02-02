@@ -14,14 +14,10 @@ namespace RajanMS
         }
 
         /* My config file
-         * 
-         * [Server]
-         * Worlds = 1
-         * Channels = 1
-         * 
-         * [Database]
-         * Host = mongodb://localhost
-         * Name = RajanMS
+            Worlds=1
+            Channels=1
+            Host=mongodb://localhost
+            Name=RajanMS
          */
     }
 }

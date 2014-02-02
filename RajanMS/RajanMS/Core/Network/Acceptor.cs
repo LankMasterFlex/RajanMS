@@ -6,6 +6,8 @@ namespace RajanMS.Network
 {
     public sealed class Acceptor
     {
+        public const int Backlog = 25;
+
         public short Port { get; private set; }
 
         private readonly TcpListener m_listener;
@@ -29,7 +31,7 @@ namespace RajanMS.Network
 
         public void Start()
         {
-            m_listener.Start(50);
+            m_listener.Start(Backlog);
             m_listener.BeginAcceptSocket(EndAccept, null);
         }
 
@@ -44,12 +46,11 @@ namespace RajanMS.Network
 
             Socket client = m_listener.EndAcceptSocket(iar);
 
-                if (OnClientAccepted != null)
-                    OnClientAccepted(client);
+            if (OnClientAccepted != null)
+                OnClientAccepted(client);
 
-
-                    m_listener.BeginAcceptSocket(EndAccept, null);
-                
+            if (!m_disposed)
+                m_listener.BeginAcceptSocket(EndAccept, null);
         }
 
         public void Dispose()

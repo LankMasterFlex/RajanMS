@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using RajanMS.Game;
 using RajanMS.Servers;
+using RajanMS.Tools;
 
 namespace RajanMS.GUI
 {
@@ -45,7 +46,7 @@ namespace RajanMS.GUI
                 BanReason = string.Empty
             };
 
-            MasterServer.Instance.Database.SaveAccount(target);
+            MasterServer.Instance.Database.Save<Account>(Database.Accounts,target);
 
             Close(); //work is done here fam
         }

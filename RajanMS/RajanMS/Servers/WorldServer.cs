@@ -5,11 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RajanMS.Game;
-using RajanMS.Core.Collections;
 
 namespace RajanMS.Servers
 {
-    sealed class WorldServer
+    public sealed class WorldServer
     {
         public byte Id { get; private set; }
         public ChannelServer[] Channels { get; private set; }

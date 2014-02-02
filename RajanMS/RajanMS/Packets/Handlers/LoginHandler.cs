@@ -5,8 +5,8 @@ using System.Linq;
 using RajanMS.IO;
 using RajanMS.Game;
 using RajanMS.Servers;
-using reNX;
-using reNX.NXProperties;
+using RajanMS.Tools;
+
 
 namespace RajanMS.Packets.Handlers
 {
@@ -34,13 +34,13 @@ namespace RajanMS.Packets.Handlers
             if (loginResult == 0)
             {
                 c.Account.LoggedIn = true;
-                c.WritePacket(LoginPacketCreator.LoginSuccess(c.Account,c.SessionId));
+                c.Send(LoginPacketCreator.LoginSuccess(c.Account,c.SessionId));
 
-                MasterServer.Instance.Database.SaveAccount(c.Account); //update logged in status
+                MasterServer.Instance.Database.Save<Account>(Database.Accounts,c.Account); //update logged in status
             }
             else
             {
-                c.WritePacket(LoginPacketCreator.LoginFail(loginResult));
+                c.Send(LoginPacketCreator.LoginFail(loginResult));
             }
         }
 
@@ -50,10 +50,10 @@ namespace RajanMS.Packets.Handlers
             {
                 var loads = ws.GetChannelLoads();
                 string name = Constants.WorldNames[ws.Id];
-                c.WritePacket(LoginPacketCreator.Worldlist(ws.Id, name, loads));
+                c.Send(LoginPacketCreator.Worldlist(ws.Id, name, loads));
             }
 
-            c.WritePacket(LoginPacketCreator.EndOfWorldlist());
+            c.Send(LoginPacketCreator.EndOfWorldlist());
         }
 
         public static void HandleCheckUserLimit(MapleClient c, InPacket p)
@@ -69,27 +69,27 @@ namespace RajanMS.Packets.Handlers
 
             if (current >= Constants.MaxPlayers) //full
             {
-                c.WritePacket(LoginPacketCreator.CheckUserLimit(2));
+                c.Send(LoginPacketCreator.CheckUserLimit(2));
             }
             else if (current * 2 >= Constants.MaxPlayers) //half full
             {
-                c.WritePacket(LoginPacketCreator.CheckUserLimit(1));
+                c.Send(LoginPacketCreator.CheckUserLimit(1));
             }
             else //under half full
             {
-                c.WritePacket(LoginPacketCreator.CheckUserLimit(0));
+                c.Send(LoginPacketCreator.CheckUserLimit(0));
             }
         }
 
         public static void HandleViewAllCharacters(MapleClient c, InPacket p)
         {
-            c.WritePacket(LoginPacketCreator.ShowAllCharacter(c.Characters.Count));
+            c.Send(LoginPacketCreator.ShowAllCharacter(c.Characters.Count));
 
             foreach (WorldServer ws in MasterServer.Instance.Worlds)
             {
                 var chars = c.Characters.Where((chr) => chr.WorldId == ws.Id); //characters in same world
 
-                c.WritePacket(LoginPacketCreator.ShowAllCharacterInfo(ws.Id, chars, c.Account.PIC));
+                c.Send(LoginPacketCreator.ShowAllCharacterInfo(ws.Id, chars, c.Account.PIC));
             }
         }
 
@@ -114,7 +114,7 @@ namespace RajanMS.Packets.Handlers
                 return;
             }
 
-            c.WritePacket(LoginPacketCreator.SelectWorldResult(c));
+            c.Send(LoginPacketCreator.SelectWorldResult(c));
         }
 
         public static void HandleCheckDuplicateName(MapleClient c, InPacket p)
@@ -125,7 +125,7 @@ namespace RajanMS.Packets.Handlers
 
             bool taken = MasterServer.Instance.Database.NameAvailable(name);
 
-            c.WritePacket(LoginPacketCreator.CheckDuplicatedID(name, taken));
+            c.Send(LoginPacketCreator.CheckDuplicatedID(name, taken));
         }
 
         public static void HandleCreateCharacter(MapleClient c, InPacket p)
@@ -272,27 +272,8 @@ namespace RajanMS.Packets.Handlers
             newChr.Luk = 4;
 
             c.Characters.Add(newChr);
-            MasterServer.Instance.Database.SaveCharacter(newChr);
-            c.WritePacket(LoginPacketCreator.CreateNewCharacter(newChr));
-        }
-
-        private static bool TestRequireIdNode(NXNode node, int req)
-        {
-            foreach (NXNode child in node)
-            {
-                int val = child.ValueOrDefault<int>(-1);
-
-                if (val == -1)
-                {
-                    MainForm.Instance.Log("[LoginHandler.TestRequireIdNode] Node value returned default");
-                    continue;
-                }
-
-                if (val == req)
-                    return true;
-            }
-
-            return false;
+            MasterServer.Instance.Database.Save<Character>(Database.Characters, newChr);
+            c.Send(LoginPacketCreator.CreateNewCharacter(newChr));
         }
 
         public static void HandleDeleteCharacter(MapleClient c, InPacket p)
@@ -304,7 +285,7 @@ namespace RajanMS.Packets.Handlers
 
             if (pic != c.Account.PIC)
             {
-                c.WritePacket(LoginPacketCreator.DeleteCharacter(cid, 0x14));
+                c.Send(LoginPacketCreator.DeleteCharacter(cid, 0x14));
             }
             else
             {
@@ -314,7 +295,7 @@ namespace RajanMS.Packets.Handlers
                 {
                     MasterServer.Instance.Database.DeleteCharacter(target);
                     c.Characters.Remove(target); //no charlist reappear!
-                    c.WritePacket(LoginPacketCreator.DeleteCharacter(cid, 0));
+                    c.Send(LoginPacketCreator.DeleteCharacter(cid, 0));
                 }
                 else
                 {
@@ -340,7 +321,7 @@ namespace RajanMS.Packets.Handlers
 
             if (pic != c.Account.PIC)
             {
-                c.WritePacket(LoginPacketCreator.BadPic());
+                c.Send(LoginPacketCreator.BadPic());
             }
             else
             {
@@ -359,7 +340,7 @@ namespace RajanMS.Packets.Handlers
 
             if (pic != c.Account.PIC)
             {
-                c.WritePacket(LoginPacketCreator.BadPic());
+                c.Send(LoginPacketCreator.BadPic());
             }
             else
             {
@@ -383,7 +364,7 @@ namespace RajanMS.Packets.Handlers
 
             MasterServer.Instance.Worlds[c.World].AddMigrationRequest(charId, c.SessionId);
             
-            c.WritePacket(LoginPacketCreator.ServerIP(ip, port, charId));
+            c.Send(LoginPacketCreator.ServerIP(ip, port, charId));
         }
     }
 }

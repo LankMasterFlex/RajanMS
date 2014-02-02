@@ -9,14 +9,15 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RajanMS</RootNamespace>
     <AssemblyName>RajanMS</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -32,15 +33,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>RajanMS.Program</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="MongoDB.Bson">
-      <HintPath>..\packages\mongocsharpdriver.1.8.1\lib\net35\MongoDB.Bson.dll</HintPath>
+      <HintPath>..\packages\mongocsharpdriver.1.8.3\lib\net35\MongoDB.Bson.dll</HintPath>
     </Reference>
     <Reference Include="MongoDB.Driver">
-      <HintPath>..\packages\mongocsharpdriver.1.8.1\lib\net35\MongoDB.Driver.dll</HintPath>
-    </Reference>
-    <Reference Include="reNX">
-      <HintPath>..\..\..\..\..\..\..\Jews Vault\reNX\reNX.dll</HintPath>
+      <HintPath>..\packages\mongocsharpdriver.1.8.3\lib\net35\MongoDB.Driver.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -54,11 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\Collections\BlockingList.cs" />
-    <Compile Include="Core\Collections\SafeDictionMap.cs" />
     <Compile Include="Core\Cryptography\AESEncryption.cs" />
     <Compile Include="Core\Cryptography\CustomEncryption.cs" />
     <Compile Include="Core\Cryptography\MapleCipher.cs" />
+    <Compile Include="Core\IO\BufferPool.cs" />
     <Compile Include="Game\Inventory.cs" />
     <Compile Include="Servers\MigrateRequest.cs" />
     <Compile Include="GUI\RegisterForm.cs">
@@ -67,6 +67,7 @@
     <Compile Include="GUI\RegisterForm.Designer.cs">
       <DependentUpon>RegisterForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Servers\ServerBase.cs" />
     <Compile Include="Tools\Database.cs" />
     <Compile Include="Game\Account.cs" />
     <Compile Include="Game\Character.cs" />
@@ -74,7 +75,7 @@
     <Compile Include="Core\IO\InPacket.cs" />
     <Compile Include="Core\IO\OutPacket.cs" />
     <Compile Include="Core\Network\Acceptor.cs" />
-    <Compile Include="Core\Network\MapleSession.cs" />
+    <Compile Include="Core\Network\Session.cs" />
     <Compile Include="Packets\Handlers\GeneralHandler.cs" />
     <Compile Include="Packets\Handlers\InterserverHandler.cs" />
     <Compile Include="Packets\Handlers\LoginHandler.cs" />
@@ -95,9 +96,8 @@
     <Compile Include="Servers\LoginServer.cs" />
     <Compile Include="Servers\MasterServer.cs" />
     <Compile Include="Servers\WorldServer.cs" />
-    <Compile Include="Tools\ConfigReader.cs" />
+    <Compile Include="Tools\Properties.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Tools\DataProvider.cs" />
     <Compile Include="Tools\Randomizer.cs" />
     <EmbeddedResource Include="GUI\RegisterForm.resx">
       <DependentUpon>RegisterForm.cs</DependentUpon>
@@ -113,6 +113,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

@@ -8,7 +8,7 @@ using RajanMS.Tools;
 
 namespace RajanMS.Servers
 {
-    sealed class MasterServer
+    public sealed class MasterServer
     {
         public static MasterServer Instance { get; set; }
 
@@ -17,19 +17,17 @@ namespace RajanMS.Servers
         public LoginServer LoginServer { get; private set; }
         public WorldServer[] Worlds { get; private set; }
         public Database Database { get; private set; }
-        public DataProvider Provider { get; private set; }
 
-        public ConfigReader Config { get; private set; }
+        public Config Config { get; private set; }
 
         public MasterServer()
         {
-            Provider = new DataProvider();
-            Config = new ConfigReader(Constants.ConfigName);
+            Config = new Config(Constants.ConfigName);
 
-            Database = new Database(Config["Database", "Host"], Config["Database", "Name"]);
+            Database = new Database(Config["Host"], Config["Name"]);
 
-            int worlds = Config["Server", "Worlds"].ToInt32();
-            byte channels = (byte)Config["Server", "Channels"].ToInt32();
+            int worlds = Config.GetInt("Worlds");
+            byte channels = (byte)Config.GetInt("Channels");
 
             if (channels > 20)
                 throw new Exception("More than 20 channels");
@@ -51,11 +49,6 @@ namespace RajanMS.Servers
 
         public void Run()
         {
-            DateTime start = DateTime.Now;
-            Provider.Cache();
-            DateTime finish = DateTime.Now;
-
-            MainForm.Instance.Log("Loaded NX files in {0}ms", (finish - start).Milliseconds);
 
             LoginServer.Run();
 
