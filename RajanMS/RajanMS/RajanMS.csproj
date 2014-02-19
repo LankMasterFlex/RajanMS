@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,6 +33,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>RajanMS.Program</StartupObject>
@@ -55,12 +57,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\Cryptography\AESEncryption.cs" />
-    <Compile Include="Core\Cryptography\CustomEncryption.cs" />
-    <Compile Include="Core\Cryptography\MapleCipher.cs" />
+    <Compile Include="Core\Network\MapleCipher.cs" />
     <Compile Include="Core\IO\BufferPool.cs" />
-    <Compile Include="Game\Inventory.cs" />
-    <Compile Include="Servers\MigrateRequest.cs" />
+    <Compile Include="Game\Inventory\InventorySlot.cs" />
+    <Compile Include="Game\Inventory\Item.cs" />
+    <Compile Include="Game\Inventory\PlayerInventory.cs" />
     <Compile Include="GUI\RegisterForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -71,21 +72,18 @@
     <Compile Include="Tools\Database.cs" />
     <Compile Include="Game\Account.cs" />
     <Compile Include="Game\Character.cs" />
-    <Compile Include="Core\IO\AbstractPacket.cs" />
     <Compile Include="Core\IO\InPacket.cs" />
     <Compile Include="Core\IO\OutPacket.cs" />
     <Compile Include="Core\Network\Acceptor.cs" />
     <Compile Include="Core\Network\Session.cs" />
-    <Compile Include="Packets\Handlers\GeneralHandler.cs" />
-    <Compile Include="Packets\Handlers\InterserverHandler.cs" />
-    <Compile Include="Packets\Handlers\LoginHandler.cs" />
+    <Compile Include="Packets\PacketHandlers.cs" />
     <Compile Include="Packets\OpCodes.cs" />
     <Compile Include="Packets\PacketCreator.cs" />
     <Compile Include="Packets\PacketProcessor.cs" />
-    <Compile Include="MainForm.cs">
+    <Compile Include="GUI\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainForm.Designer.cs">
+    <Compile Include="GUI\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="MapleClient.cs" />
@@ -95,14 +93,13 @@
     <Compile Include="Servers\ChannelServer.cs" />
     <Compile Include="Servers\LoginServer.cs" />
     <Compile Include="Servers\MasterServer.cs" />
-    <Compile Include="Servers\WorldServer.cs" />
-    <Compile Include="Tools\Properties.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="Tools\Config.cs" />
+    <Compile Include="Tools\Constants.cs" />
     <Compile Include="Tools\Randomizer.cs" />
     <EmbeddedResource Include="GUI\RegisterForm.resx">
       <DependentUpon>RegisterForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MainForm.resx">
+    <EmbeddedResource Include="GUI\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -125,6 +122,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Tools\Server.prop" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

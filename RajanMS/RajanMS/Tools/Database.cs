@@ -1,17 +1,15 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using RajanMS.Game;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using MongoDB;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Builders;
-using RajanMS.Game;
 
 namespace RajanMS.Tools
 {
     public sealed class Database
     {
+        public static Database Instance { get; set; }
+
         public const string Accounts = "accounts";
         public const string Characters = "characters";
 
@@ -27,7 +25,7 @@ namespace RajanMS.Tools
         public bool NameAvailable(string name)
         {
             var query = new QueryDocument("Name", name);
-            return m_database.GetCollection<BsonDocument>(Characters).FindOne(query) != null;
+            return m_database.GetCollection<BsonDocument>(Characters).FindOne(query) == null;
         }
 
         /// <returns>
@@ -46,14 +44,13 @@ namespace RajanMS.Tools
             if (acc == null)//username not found
                 return 5;
 
+            if (acc.Banned)
+                return 2;
+
             if (acc.Password == pass)
             {
-                if (acc.LoggedIn)
-                    return 7;
-
                 c.Account = acc;
                 c.Characters = GetCharacters(acc);
-
                 return 0;
             }
             else
@@ -79,6 +76,7 @@ namespace RajanMS.Tools
             return m_database.GetCollection<Character>(Characters).Find(query).ToList();
         }
 
+        //TODO : Fix these 'Get' methods
         public int GetNewCharacterId()
         {
             var collection = m_database.GetCollection<Character>(Characters);
@@ -111,22 +109,20 @@ namespace RajanMS.Tools
             return id + 1;
         }
 
+
         public void DeleteCharacter(Character c)
         {
             var query = new QueryDocument("CharId",c.CharId);
             m_database.GetCollection<Character>(Characters).Remove(query);
         }
 
+        public void Delete<T>(string collection,QueryDocument query)
+        {
+            m_database.GetCollection<T>(collection).Remove(query);
+        }
         public void Save<T>(string collection,T value)
         {
             m_database.GetCollection<T>(collection).Save(value);
-        }
-
-        public void SetAllOffline()
-        {
-            var query = new QueryDocument("LoggedIn", true);
-            var update = Update.Set("LoggedIn", false);
-            m_database.GetCollection<Account>(Accounts).Update(query, update, UpdateFlags.Multi);
         }
     }
 }

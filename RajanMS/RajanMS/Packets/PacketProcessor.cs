@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using RajanMS.IO;
+﻿using RajanMS.IO;
+using System;
 
 namespace RajanMS.Packets
 {
@@ -11,32 +10,22 @@ namespace RajanMS.Packets
         public string Label { get; private set; }
 
         private PacketHandler[] m_handlers;
-        private int m_count;
-
-        public int Count
-        {
-            get
-            {
-                return m_count;
-            }
-        }
 
         public PacketProcessor(string label)
         {
             Label = label;
-            m_handlers = new PacketHandler[0xFFFF + 1]; //YOLO
+            m_handlers = new PacketHandler[256];
         }
 
-        public void AppendHandler(short opcode, PacketHandler handler)
+        public void AppendHandler(byte opcode, PacketHandler handler)
         {
             if (m_handlers[opcode] != null)
                 throw new InvalidOperationException("Handler already set");
 
             m_handlers[opcode] = handler;
-            m_count++;
         }
 
-        public PacketHandler this[short opcode]
+        public PacketHandler this[byte opcode]
         {
             get
             {

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Net.Sockets;
 using RajanMS.Core.IO;
-using RajanMS.Cryptography;
+using RajanMS.Tools;
+using RajanMS.IO;
 
 namespace RajanMS.Network
 {
@@ -106,6 +107,7 @@ namespace RajanMS.Network
 
                 byte[] packetBuffer = new byte[packetSize];
                 Buffer.BlockCopy(m_packet, 4, packetBuffer, 0, packetSize); //copy packet
+
                 m_recvCipher.Transform(packetBuffer); //decrypt
 
                 m_offset -= packetSize + HeaderSize; //fix len
@@ -117,6 +119,10 @@ namespace RajanMS.Network
             }
         }
 
+        public void Send(OutPacket packet)
+        {
+            Send(packet.ToArray());
+        }
         public void Send(params byte[][] packets)
         {
             if (!m_connected) { return; }

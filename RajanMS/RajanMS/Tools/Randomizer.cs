@@ -5,12 +5,10 @@ namespace RajanMS.Tools
     public static class Randomizer
     {
         private static Random sRandom = new Random();
-
         public static void NextBytes(byte[] bytes)
         {
             sRandom.NextBytes(bytes);
         }
-
         public static int Generate()
         {
             return sRandom.Next();

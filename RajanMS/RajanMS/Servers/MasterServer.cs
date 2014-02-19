@@ -1,10 +1,6 @@
-﻿using System;
+﻿using RajanMS.Tools;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RajanMS;
-using RajanMS.Tools;
 
 namespace RajanMS.Servers
 {
@@ -14,46 +10,70 @@ namespace RajanMS.Servers
 
         public bool Running { get; private set; }
 
-        public LoginServer LoginServer { get; private set; }
-        public WorldServer[] Worlds { get; private set; }
-        public Database Database { get; private set; }
+        public LoginServer Login { get; private set; }
+        public ChannelServer[] Channels { get; private set; }
 
         public Config Config { get; private set; }
+
+        private List<string> m_loginPool;
 
         public MasterServer()
         {
             Config = new Config(Constants.ConfigName);
 
-            Database = new Database(Config["Host"], Config["Name"]);
+            Database.Instance = new Database(Config["Host"], Config["Name"]);
 
-            int worlds = Config.GetInt("Worlds");
             byte channels = (byte)Config.GetInt("Channels");
 
             if (channels > 20)
                 throw new Exception("More than 20 channels");
 
-            if (worlds > Constants.WorldNames.Length)
-                throw new Exception("More than supported worlds");
+            Login = new LoginServer(8484);
 
-            LoginServer = new LoginServer(8484);
-            Worlds = new WorldServer[worlds];
+            Channels = new ChannelServer[channels];
 
-            short port = 8485;
+            short port = 8585;
 
-            for (int i = 0; i < worlds; i++)
+            for (int i = 0; i < channels; i++)
             {
-                Worlds[i] = new WorldServer((byte)i, port, channels);
-                port += channels;
+                Channels[i] = new ChannelServer((byte)i, port);
+                port++;
             }
+
+            m_loginPool = new List<string>();
+
+        }
+
+        public byte LoginClient(MapleClient c,string user,string pass)
+        {
+            lock(m_loginPool)
+            {
+                if (m_loginPool.Contains(user.ToLower()))
+                    return 7; //already logged in
+
+                var result = Database.Instance.Login(c, user, pass);
+
+                if (result == 0)
+                {
+                    m_loginPool.Add(user);
+                    c.LoggedIn = true;
+                }
+
+                return result;
+            }
+        }
+        public void RemoveClient(string username)
+        {
+            lock (m_loginPool)
+                m_loginPool.Remove(username.ToLower());
         }
 
         public void Run()
         {
+            Login.Run();
 
-            LoginServer.Run();
-
-            foreach (WorldServer ws in Worlds)
-                ws.Run();
+            foreach (var c in Channels)
+                c.Run();
 
             Running = true;
 
@@ -63,12 +83,10 @@ namespace RajanMS.Servers
         {
             MainForm.Instance.Log("Shutting down MasterServer");
 
-            LoginServer.Shutdown();
+            Login.Shutdown();
 
-            foreach (WorldServer ws in Worlds)
-                ws.Shutdown();
-
-            Database.SetAllOffline();
+            foreach (var c in Channels)
+                c.Shutdown();
 
             Running = false;
 

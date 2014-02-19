@@ -1,17 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using RajanMS.Game;
-using RajanMS.GUI;
+﻿using RajanMS.GUI;
 using RajanMS.Servers;
 using RajanMS.Tools;
+using System;
+using System.Windows.Forms;
 
 namespace RajanMS
 {
@@ -25,15 +16,15 @@ namespace RajanMS
         public MainForm()
         {
             Instance = this;
-         
+
             InitializeComponent();
             m_logFunc = new LogDelegate(Log);
 
-            Text = string.Concat("RajanMS v", Constants.MajorVersion, '.', Constants.MinorVersion);
+            Text = string.Concat("RajanMS v", Constants.MajorVersion);
+            DoubleBuffered = true;
 
             MasterServer.Instance = new MasterServer();
         }
-
 
         public void Log(string fmt, params object[] args)
         {
@@ -70,8 +61,14 @@ namespace RajanMS
                 {
                     MasterServer.Instance.Shutdown();
                     btnToggle.Text = "Start";
+                    btnToggle.Enabled = false;
                 }
             }
+        }
+        private void btnCreateAcc_Click(object sender, EventArgs e)
+        {
+            using (var gui = new RegisterForm())
+                gui.ShowDialog();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -81,12 +78,6 @@ namespace RajanMS
                 Log("Please shutdown the server first");
                 e.Cancel = true;
             }
-        }
-
-        private void btnCreateAcc_Click(object sender, EventArgs e)
-        {
-            using (var gui = new RegisterForm())
-                gui.ShowDialog();
         }
     }
 }

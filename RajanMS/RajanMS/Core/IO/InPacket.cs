@@ -1,59 +1,132 @@
-﻿using System.IO;
-using System.Text;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace RajanMS.IO
 {
-    public sealed class InPacket : AbstractPacket
+    public class InPacket
     {
-        private BinaryReader m_binaryReader;
+        private byte[] m_buffer;
+        private int m_index;
+
+        public int Position
+        {
+            get
+            {
+                return m_index;
+            }
+        }
+        public int Available
+        {
+            get
+            {
+                return m_buffer.Length - m_index;
+            }
+        }
 
         public InPacket(byte[] packet)
         {
-            m_memoryStream = new MemoryStream(packet, false);
-            m_binaryReader = new BinaryReader(m_memoryStream, Encoding.ASCII);
-        }
-        public InPacket(byte[] packet, int index, int count)
-        {
-            m_memoryStream = new MemoryStream(packet, index, count, false, false);
-            m_binaryReader = new BinaryReader(m_memoryStream, Encoding.ASCII);
+            m_buffer = packet;
+            m_index = 0;
         }
 
-        public byte[] ReadBytes(int count)
+        private void CheckLength(int length)
         {
-            return m_binaryReader.ReadBytes(count);
+            if (m_index + length > m_buffer.Length || length < 0)
+                throw new IndexOutOfRangeException();
+        }
+
+        public bool ReadBool()
+        {
+            return m_buffer[m_index++] != 0;
         }
         public byte ReadByte()
         {
-            return m_binaryReader.ReadByte();
+            return m_buffer[m_index++];
         }
-        public bool ReadBool()
+        public byte[] ReadBytes(int count)
         {
-            return m_binaryReader.ReadBoolean();
+            CheckLength(count);
+            var temp = new byte[count];
+            Buffer.BlockCopy(m_buffer, m_index, temp, 0, count);
+            m_index += count;
+            return temp;
         }
-        public short ReadShort()
+        public unsafe short ReadShort()
         {
-            return m_binaryReader.ReadInt16();
+            CheckLength(2);
+
+            short value;
+
+            fixed (byte* ptr = m_buffer)
+            {
+                value = *(short*)(ptr + m_index);
+            }
+
+            m_index += 2;
+
+            return value;
         }
-        public int ReadInt()
+        public unsafe int ReadInt()
         {
-            return m_binaryReader.ReadInt32();
+            CheckLength(4);
+
+            int value;
+
+            fixed (byte* ptr = m_buffer)
+            {
+                value = *(int*)(ptr + m_index);
+            }
+
+            m_index += 4;
+
+            return value;
         }
-        public long ReadLong()
+        public unsafe long ReadLong()
         {
-            return m_binaryReader.ReadInt64();
+            CheckLength(8);
+
+            long value;
+
+            fixed (byte* ptr = m_buffer)
+            {
+                value = *(long*)(ptr + m_index);
+            }
+
+            m_index += 8;
+
+            return value;
         }
-        public string ReadString(int length)
+
+        public string ReadString(int count)
         {
-            return new string(m_binaryReader.ReadChars(length));
+            CheckLength(count);
+
+            char[] final = new char[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                final[i] = (char)ReadByte();
+            }
+
+            return new string(final);
         }
         public string ReadMapleString()
         {
-            return ReadString(ReadShort());
+            short count = ReadShort();
+            return ReadString(count);
         }
 
-        protected override void CustomDispose()
+        public void Skip(int count)
         {
-            m_binaryReader.Dispose();
+            CheckLength(count);
+            m_index += count;
+        }
+
+        public byte[] ToArray()
+        {
+            var final = new byte[m_buffer.Length];
+            Buffer.BlockCopy(m_buffer, 0, final, 0, m_buffer.Length);
+            return final;
         }
     }
 }

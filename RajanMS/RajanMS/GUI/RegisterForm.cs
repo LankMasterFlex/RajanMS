@@ -30,25 +30,17 @@ namespace RajanMS.GUI
 
             Account target = new Account()
             {
-                AccountId = MasterServer.Instance.Database.GetNewAccountId(),
+                AccountId = Database.Instance.GetNewAccountId(),
                 Username = txtUser.Text,
                 Password = txtPass.Text,
-                PIC = txtPIC.Text,
-
-                LastIP = string.Empty,
-
                 Gender = 0,
-
-                LoggedIn = false,
                 GM = chkbGM.Checked,
-
                 Banned = false,
-                BanReason = string.Empty
             };
 
-            MasterServer.Instance.Database.Save<Account>(Database.Accounts,target);
+            Database.Instance.Save<Account>(Database.Accounts,target);
 
-            Close(); //work is done here fam
+            Close();
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Net.Sockets;
-using RajanMS.Network;
+﻿using RajanMS.Network;
 using RajanMS.Packets;
+using System.Collections.Generic;
+using System.Net.Sockets;
 
 namespace RajanMS.Servers
 {
@@ -10,6 +10,14 @@ namespace RajanMS.Servers
         protected Acceptor m_acceptor;
         protected List<MapleClient> m_clients;
         protected PacketProcessor m_processor;
+
+        public short Port
+        {
+            get
+            {
+                return m_acceptor.Port;
+            }
+        }
 
         public ServerBase(short port)
         {

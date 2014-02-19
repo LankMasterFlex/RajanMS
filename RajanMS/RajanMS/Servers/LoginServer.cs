@@ -1,6 +1,6 @@
-﻿using System.Net.Sockets;
-using RajanMS.Packets;
+﻿using RajanMS.Packets;
 using RajanMS.Packets.Handlers;
+using System.Net.Sockets;
 
 namespace RajanMS.Servers
 {
@@ -11,38 +11,21 @@ namespace RajanMS.Servers
         protected override void SpawnHandlers()
         {
             m_processor = new PacketProcessor("Login");
-
-            m_processor.AppendHandler(RecvOps.Validate, LoginHandler.HandleValidate);
-            m_processor.AppendHandler(RecvOps.LoginPassword, LoginHandler.HandleLoginPassword);
-            m_processor.AppendHandler(RecvOps.WorldInfoRequest, LoginHandler.HandleWorldInfoRequest);
-            m_processor.AppendHandler(RecvOps.WorldInfoRequest2, LoginHandler.HandleWorldInfoRequest);
-            m_processor.AppendHandler(RecvOps.CheckUserLimit, LoginHandler.HandleCheckUserLimit);
-            m_processor.AppendHandler(RecvOps.WorldSelect, LoginHandler.HandleWorldSelect);
-            m_processor.AppendHandler(RecvOps.CheckDuplicateName, LoginHandler.HandleCheckDuplicateName);
-            m_processor.AppendHandler(RecvOps.CreateCharacter, LoginHandler.HandleCreateCharacter);
-            m_processor.AppendHandler(RecvOps.DeleteCharacter, LoginHandler.HandleDeleteCharacter);
-            m_processor.AppendHandler(RecvOps.SelectCharacter, LoginHandler.HandleSelectCharacter);
-            m_processor.AppendHandler(RecvOps.ViewAllSelectCharacter, LoginHandler.HandleSelectCharacter);
-            m_processor.AppendHandler(RecvOps.SelectCharacterSetPIC, LoginHandler.HandleSelectCharacterSetPIC);
-            m_processor.AppendHandler(RecvOps.ViewAllCharacters, LoginHandler.HandleViewAllCharacters);
-            m_processor.AppendHandler(RecvOps.ViewWorldInfo, LoginHandler.HandleViewWorldInfo);
-
-            m_processor.AppendHandler(RecvOps.StartHackshield, GeneralHandler.HandleNothing);
-            m_processor.AppendHandler(RecvOps.Pong, GeneralHandler.HandleNothing);
-            m_processor.AppendHandler(RecvOps.Unk1, GeneralHandler.HandleNothing);
-            m_processor.AppendHandler(RecvOps.ClientException, GeneralHandler.HandleClientException);
+            m_processor.AppendHandler(RecvOps.CheckPassword, PacketHandlers.OnCheckPassword);
+            m_processor.AppendHandler(RecvOps.SelectWorld, PacketHandlers.OnSelectWorld);
+            m_processor.AppendHandler(RecvOps.CheckUserLimit, PacketHandlers.OnCheckUserLimit);
+            m_processor.AppendHandler(RecvOps.SelectCharacter, PacketHandlers.OnSelectCharacter);
+            m_processor.AppendHandler(RecvOps.CheckDuplicatedID, PacketHandlers.OnCheckDuplicatedID);
+            m_processor.AppendHandler(RecvOps.CreateNewCharacter, PacketHandlers.OnCreateNewCharacter);
+            m_processor.AppendHandler(RecvOps.DeleteCharacter, PacketHandlers.OnDeleteCharacter);
         }
-
         protected override void OnClientAccepted(Socket client)
         {
-            MapleClient mc = new MapleClient(client,this, m_processor)
-            {
-                SessionId = Tools.Randomizer.Generate(),
-            };
-
+            MapleClient mc = new MapleClient(client, this, m_processor);
             mc.SendRaw(PacketCreator.Handshake());
             MainForm.Instance.Log("[Login] Accepted client {0}", mc.Label);
         }
+
         public override void Run()
         {
             m_acceptor.Start();
